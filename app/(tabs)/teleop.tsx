@@ -404,12 +404,14 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     paddingBottom: 100,
+    backgroundColor: '#000',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',
+    color:'#F8F5F5',
   },
   content: {
     gap: 10,

@@ -44,9 +44,29 @@ export default function RootLayout() {
 function RootLayoutNav() {
   const colorScheme = useColorScheme() ?? 'light';
 
+  const customDarkTheme = {
+    ...DarkTheme,
+    colors: {
+      ...DarkTheme.colors,
+      background: '#000',
+      card: '#2F2F2F',
+      text: '#fff',
+    },
+  };
+
+  const customLightTheme = {
+    ...DefaultTheme,
+    colors: {
+      ...DefaultTheme.colors,
+      background: '#fff',
+      card: '#fff',
+      text: '#000',
+    },
+  };
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <ThemeProvider value={colorScheme === 'dark' ? customDarkTheme : customLightTheme}>
         <ScoutingProvider>
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

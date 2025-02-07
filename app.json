@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "FIRST-Scouting",
-    "slug": "FIRST-Scouting",
+    "name": "2025 FRC Scouting Tool",
+    "slug": "2025-frc-scouting-tool",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -47,8 +47,9 @@
         "origin": false
       },
       "eas": {
-        "projectId": "7c99c989-3639-40c1-bb6a-2c9921966c22"
+        "projectId": "56c6ab98-fcb8-425b-baed-c2ff4b989ad7"
       }
-    }
+    },
+    "owner": "jdawg_08"
   }
 }
