@@ -69,6 +69,15 @@ export const config_data = `
       "code": "al",
       "type": "bool"
     },
+    { "name": "Scoring Positions",
+      "code": "asp",
+      "type": "clickable_image",
+      "filename": "2025/field_image.png",
+      "clickRestriction": "none",
+      "allowableResponses": "6 7 18 19 30 31 42 43 54 55 66 67",
+      "shape": "circle 5 black red true",
+      "toggleClick": "true"
+    },
     { "name": "Coral L1",
       "code": "ac1",
       "type": "counter"

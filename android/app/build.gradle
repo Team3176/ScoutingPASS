@@ -86,6 +86,23 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.14"
+    }
+
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+        kotlinOptions {
+            freeCompilerArgs += [
+                "-P",
+                "plugin:androidx.compose.compiler.plugins.kotlin:suppressKotlinVersionCompatibilityCheck=true"
+            ]
+        }
+    }
+
     namespace 'com.firstscouting.scoutingpass'
     defaultConfig {
         applicationId 'com.firstscouting.scoutingpass'
@@ -173,7 +190,4 @@ dependencies {
     } else {
         implementation jscFlavor
     }
-
-    // Temporarily comment out reanimated
-    // implementation project(':react-native-reanimated')
 }

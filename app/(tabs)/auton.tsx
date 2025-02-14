@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, TouchableOpacity } from 'react-native';
+import { StyleSheet, TouchableOpacity, Image, Dimensions, View as RNView } from 'react-native';
 import { Text, View } from '../../components/Themed';
 import { ScrollView } from 'react-native-gesture-handler';
 import { useRouter } from 'expo-router';
@@ -9,6 +9,38 @@ import { useColorScheme } from 'react-native';
 import Colors from '../../constants/Colors';
 import { config_data } from './2025/reefscape_config.js';
 import { useScoutingData } from '../../context/ScoutingContext';
+
+const FieldImage = React.memo(() => (
+  <Image
+    source={require('./2025/field_image.png')}
+    style={styles.fieldImage}
+    resizeMode="contain"
+  />
+));
+
+const Dots = React.memo(({ points }: { points: { x: number; y: number }[] }) => (
+  <>
+    {points.map((point, index) => (
+      <RNView
+        key={index}
+        style={[
+          styles.dot,
+          {
+            left: point.x - 5,
+            top: point.y - 5,
+          },
+        ]}
+      />
+    ))}
+  </>
+));
+
+const ClickableFieldOverlay = React.memo(({ onPress }: { onPress: (event: any) => void }) => (
+  <TouchableOpacity 
+    onPress={onPress}
+    style={StyleSheet.absoluteFill}
+  />
+));
 
 export default function AutonScreen() {
   const router = useRouter();
@@ -27,6 +59,7 @@ export default function AutonScreen() {
     mobility: scoutingData.mobility,
     crossedLine: scoutingData.crossedLine || false,
     coralScoredLocation: scoutingData.coralScoredLocation || null,
+    scoringPositions: scoutingData.autonScoringPositions || [],
   });
 
   // Update local state when context changes (e.g. when form is cleared)
@@ -41,8 +74,38 @@ export default function AutonScreen() {
       mobility: scoutingData.mobility,
       crossedLine: scoutingData.crossedLine || false,
       coralScoredLocation: scoutingData.coralScoredLocation || null,
+      scoringPositions: scoutingData.autonScoringPositions || [],
     });
   }, [scoutingData]);
+
+  const handleImageClick = (event: any) => {
+    const { locationX, locationY } = event.nativeEvent;
+    const imageWidth = Dimensions.get('window').width - 40;
+    const imageHeight = imageWidth * 0.6;
+
+    // Only set point if click is within image bounds
+    if (locationX >= 0 && locationX <= imageWidth && locationY >= 0 && locationY <= imageHeight) {
+      // Check if point already exists at this location (with some tolerance)
+      const tolerance = 10;
+      const existingPointIndex = scores.scoringPositions.findIndex(point => 
+        Math.abs(point.x - locationX) < tolerance && Math.abs(point.y - locationY) < tolerance
+      );
+
+      if (existingPointIndex !== -1) {
+        // Remove the point if it exists
+        setScores(prev => ({
+          ...prev,
+          scoringPositions: prev.scoringPositions.filter((_, index) => index !== existingPointIndex)
+        }));
+      } else {
+        // Add new point
+        setScores(prev => ({
+          ...prev,
+          scoringPositions: [...prev.scoringPositions, { x: locationX, y: locationY }]
+        }));
+      }
+    }
+  };
 
   const handleIncrement = (key: keyof typeof scores) => {
     if (typeof scores[key] === 'number') {
@@ -88,6 +151,7 @@ export default function AutonScreen() {
       mobility: scores.mobility,
       crossedLine: scores.crossedLine,
       coralScoredLocation: scores.coralScoredLocation,
+      autonScoringPositions: scores.scoringPositions,
     });
     router.push('/teleop');
   };
@@ -100,13 +164,31 @@ export default function AutonScreen() {
   const coralL4Config = autonConfig.find((field: any) => field.code === 'ac4');
   const processorScoreConfig = autonConfig.find((field: any) => field.code === 'aps');
   const netScoreConfig = autonConfig.find((field: any) => field.code === 'ans');
+  const scoringPositionsConfig = autonConfig.find((field: any) => field.code === 'asp');
 
   return (
-    <View style={styles.container}>
+    <View style={[
+      styles.container,
+      { backgroundColor: colorScheme === 'light' ? '#fff' : '#000' }
+    ]}>
       <ScrollView>
-        <Text style={styles.title}>{configJson.page_title} - Autonomous</Text>
+        <Text style={[
+          styles.title,
+          { color: colorScheme === 'light' ? '#000' : '#fff' }
+        ]}>{configJson.page_title} - Autonomous</Text>
         
         <View style={styles.content}>
+          <View style={styles.fieldImageContainer}>
+            <Text style={styles.imageLabel}>{scoringPositionsConfig?.name || "Scoring Positions"}</Text>
+            <View style={styles.imageWrapper}>
+              <RNView style={styles.imageContainer}>
+                <FieldImage />
+                <Dots points={scores.scoringPositions} />
+                <ClickableFieldOverlay onPress={handleImageClick} />
+              </RNView>
+            </View>
+          </View>
+
           <Counter
             label={coralL1Config?.name || "Coral L1"}
             value={scores.coralL1}
@@ -295,5 +377,35 @@ const styles = StyleSheet.create({
   locationText: {
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  fieldImageContainer: {
+    marginVertical: 10,
+  },
+  imageLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+    textAlign: 'center',
+  },
+  imageWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  imageContainer: {
+    position: 'relative',
+    width: Dimensions.get('window').width - 40,
+    height: (Dimensions.get('window').width - 40) * 0.6,
+  },
+  fieldImage: {
+    width: '100%',
+    height: '100%',
+  },
+  dot: {
+    position: 'absolute',
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: 'red',
+    zIndex: 1,
   },
 }); 

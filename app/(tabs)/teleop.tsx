@@ -7,6 +7,7 @@ import { Button } from '../../components/ui/Button';
 import { FontAwesome } from '@expo/vector-icons';
 import { config_data } from './2025/reefscape_config.js';
 import { useScoutingData } from '../../context/ScoutingContext';
+import { useColorScheme } from 'react-native';
 
 interface CounterProps {
   label: string;
@@ -70,6 +71,7 @@ export default function TeleopScreen() {
   const configJson = JSON.parse(config_data);
   const teleopConfig = configJson.teleop;
   const { scoutingData, updateScoutingData } = useScoutingData();
+  const colorScheme = useColorScheme();
 
   const [scores, setScores] = useState({
     speakerScored: scoutingData.teleopSpeakerScored,
@@ -210,192 +212,200 @@ export default function TeleopScreen() {
   const netScoreConfig = teleopConfig.find((field: any) => field.code === 'tns');
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>{configJson.page_title} - Teleop</Text>
-      
-      <View style={styles.content}>
-        <View style={styles.counterRow}>
-          <View style={styles.counterWrapper}>
-            <Counter
-              label={coralL1Config?.name || "Coral L1"}
-              value={scores.coralL1}
-              onIncrement={() => handleIncrement('coralL1')}
-              onDecrement={() => handleDecrement('coralL1')}
-            />
+    <View style={[
+      styles.container,
+      { backgroundColor: colorScheme === 'light' ? '#fff' : '#000' }
+    ]}>
+      <ScrollView>
+        <Text style={[
+          styles.title,
+          { color: colorScheme === 'light' ? '#000' : '#fff' }
+        ]}>{configJson.page_title} - Teleop</Text>
+        
+        <View style={styles.content}>
+          <View style={styles.counterRow}>
+            <View style={styles.counterWrapper}>
+              <Counter
+                label={coralL1Config?.name || "Coral L1"}
+                value={scores.coralL1}
+                onIncrement={() => handleIncrement('coralL1')}
+                onDecrement={() => handleDecrement('coralL1')}
+              />
+            </View>
+            <View style={styles.counterWrapper}>
+              <Counter
+                label={coralL2Config?.name || "Coral L2"}
+                value={scores.coralL2}
+                onIncrement={() => handleIncrement('coralL2')}
+                onDecrement={() => handleDecrement('coralL2')}
+              />
+            </View>
           </View>
-          <View style={styles.counterWrapper}>
-            <Counter
-              label={coralL2Config?.name || "Coral L2"}
-              value={scores.coralL2}
-              onIncrement={() => handleIncrement('coralL2')}
-              onDecrement={() => handleDecrement('coralL2')}
-            />
-          </View>
-        </View>
 
-        <View style={styles.counterRow}>
-          <View style={styles.counterWrapper}>
-            <Counter
-              label={coralL3Config?.name || "Coral L3"}
-              value={scores.coralL3}
-              onIncrement={() => handleIncrement('coralL3')}
-              onDecrement={() => handleDecrement('coralL3')}
-            />
+          <View style={styles.counterRow}>
+            <View style={styles.counterWrapper}>
+              <Counter
+                label={coralL3Config?.name || "Coral L3"}
+                value={scores.coralL3}
+                onIncrement={() => handleIncrement('coralL3')}
+                onDecrement={() => handleDecrement('coralL3')}
+              />
+            </View>
+            <View style={styles.counterWrapper}>
+              <Counter
+                label={coralL4Config?.name || "Coral L4"}
+                value={scores.coralL4}
+                onIncrement={() => handleIncrement('coralL4')}
+                onDecrement={() => handleDecrement('coralL4')}
+              />
+            </View>
           </View>
-          <View style={styles.counterWrapper}>
-            <Counter
-              label={coralL4Config?.name || "Coral L4"}
-              value={scores.coralL4}
-              onIncrement={() => handleIncrement('coralL4')}
-              onDecrement={() => handleDecrement('coralL4')}
-            />
-          </View>
-        </View>
 
-        <View style={styles.counterRow}>
-          <View style={styles.counterWrapper}>
-            <Counter
-              label={processorScoreConfig?.name || "Processor Score"}
-              value={scores.processorScore}
-              onIncrement={() => handleIncrement('processorScore')}
-              onDecrement={() => handleDecrement('processorScore')}
-            />
+          <View style={styles.counterRow}>
+            <View style={styles.counterWrapper}>
+              <Counter
+                label={processorScoreConfig?.name || "Processor Score"}
+                value={scores.processorScore}
+                onIncrement={() => handleIncrement('processorScore')}
+                onDecrement={() => handleDecrement('processorScore')}
+              />
+            </View>
+            <View style={styles.counterWrapper}>
+              <Counter
+                label={netScoreConfig?.name || "Net Score"}
+                value={scores.netScore}
+                onIncrement={() => handleIncrement('netScore')}
+                onDecrement={() => handleDecrement('netScore')}
+              />
+            </View>
           </View>
-          <View style={styles.counterWrapper}>
-            <Counter
-              label={netScoreConfig?.name || "Net Score"}
-              value={scores.netScore}
-              onIncrement={() => handleIncrement('netScore')}
-              onDecrement={() => handleDecrement('netScore')}
-            />
+
+          <View style={styles.counterRow}>
+            <View style={styles.counterWrapper}>
+              <Counter
+                label="Speaker Scored"
+                value={scores.speakerScored}
+                onIncrement={() => handleIncrement('speakerScored')}
+                onDecrement={() => handleDecrement('speakerScored')}
+              />
+            </View>
+            <View style={styles.counterWrapper}>
+              <Counter
+                label="Amp Scored"
+                value={scores.ampScored}
+                onIncrement={() => handleIncrement('ampScored')}
+                onDecrement={() => handleDecrement('ampScored')}
+              />
+            </View>
           </View>
-        </View>
 
-        <View style={styles.counterRow}>
-          <View style={styles.counterWrapper}>
-            <Counter
-              label="Speaker Scored"
-              value={scores.speakerScored}
-              onIncrement={() => handleIncrement('speakerScored')}
-              onDecrement={() => handleDecrement('speakerScored')}
-            />
+          <View style={styles.counterRow}>
+            <View style={styles.counterWrapper}>
+              <Counter
+                label="Note Pickup"
+                value={scores.notePickup}
+                onIncrement={() => handleIncrement('notePickup')}
+                onDecrement={() => handleDecrement('notePickup')}
+              />
+            </View>
           </View>
-          <View style={styles.counterWrapper}>
-            <Counter
-              label="Amp Scored"
-              value={scores.ampScored}
-              onIncrement={() => handleIncrement('ampScored')}
-              onDecrement={() => handleDecrement('ampScored')}
-            />
+
+          <View style={styles.counterRow}>
+            <View style={styles.counterWrapper}>
+              <Counter
+                label="Algae scored in Processor"
+                value={scores.algaeProcessor}
+                onIncrement={() => handleIncrement('algaeProcessor')}
+                onDecrement={() => handleDecrement('algaeProcessor')}
+              />
+            </View>
+            <View style={styles.counterWrapper}>
+              <Counter
+                label="Algae scored in Net"
+                value={scores.algaeNet}
+                onIncrement={() => handleIncrement('algaeNet')}
+                onDecrement={() => handleDecrement('algaeNet')}
+              />
+            </View>
           </View>
-        </View>
 
-        <View style={styles.counterRow}>
-          <View style={styles.counterWrapper}>
-            <Counter
-              label="Note Pickup"
-              value={scores.notePickup}
-              onIncrement={() => handleIncrement('notePickup')}
-              onDecrement={() => handleDecrement('notePickup')}
-            />
-          </View>
-        </View>
-
-        <View style={styles.counterRow}>
-          <View style={styles.counterWrapper}>
-            <Counter
-              label="Algae scored in Processor"
-              value={scores.algaeProcessor}
-              onIncrement={() => handleIncrement('algaeProcessor')}
-              onDecrement={() => handleDecrement('algaeProcessor')}
-            />
-          </View>
-          <View style={styles.counterWrapper}>
-            <Counter
-              label="Algae scored in Net"
-              value={scores.algaeNet}
-              onIncrement={() => handleIncrement('algaeNet')}
-              onDecrement={() => handleDecrement('algaeNet')}
-            />
-          </View>
-        </View>
-
-        <View style={styles.checkboxContainer}>
-          <TouchableOpacity 
-            style={[styles.checkbox, scores.scoredFarSide && styles.checkboxActive]}
-            onPress={() => toggleCheckbox('scoredFarSide')}
-          >
-            <Text style={styles.checkboxText}>
-              Scored on far side of Reef? {scores.scoredFarSide ? '✓' : '✗'}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.checkbox, scores.algaeRemoved && styles.checkboxActive]}
-            onPress={() => toggleCheckbox('algaeRemoved')}
-          >
-            <Text style={styles.checkboxText}>
-              Algae Removed? {scores.algaeRemoved ? '✓' : '✗'}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.checkbox, scores.robotDied && styles.checkboxActive]}
-            onPress={() => toggleCheckbox('robotDied')}
-          >
-            <Text style={styles.checkboxText}>
-              Robot Died? {scores.robotDied ? '✓' : '✗'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.dropdownContainer}>
-          <Text style={styles.dropdownTitle}>Cage Hang</Text>
-          <View style={styles.dropdownButtons}>
+          <View style={styles.checkboxContainer}>
             <TouchableOpacity 
-              style={[styles.dropdownButton, scores.cageHang === 'deep' && styles.dropdownActive]}
-              onPress={() => setScores(prev => ({ ...prev, cageHang: 'deep' }))}
+              style={[styles.checkbox, scores.scoredFarSide && styles.checkboxActive]}
+              onPress={() => toggleCheckbox('scoredFarSide')}
             >
-              <Text style={[styles.dropdownText, scores.cageHang === 'deep' && styles.dropdownTextActive]}>
-                Deep Cage
+              <Text style={styles.checkboxText}>
+                Scored on far side of Reef? {scores.scoredFarSide ? '✓' : '✗'}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
-              style={[styles.dropdownButton, scores.cageHang === 'shallow' && styles.dropdownActive]}
-              onPress={() => setScores(prev => ({ ...prev, cageHang: 'shallow' }))}
+              style={[styles.checkbox, scores.algaeRemoved && styles.checkboxActive]}
+              onPress={() => toggleCheckbox('algaeRemoved')}
             >
-              <Text style={[styles.dropdownText, scores.cageHang === 'shallow' && styles.dropdownTextActive]}>
-                Shallow Cage
+              <Text style={styles.checkboxText}>
+                Algae Removed? {scores.algaeRemoved ? '✓' : '✗'}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
-              style={[styles.dropdownButton, scores.cageHang === 'line' && styles.dropdownActive]}
-              onPress={() => setScores(prev => ({ ...prev, cageHang: 'line' }))}
+              style={[styles.checkbox, scores.robotDied && styles.checkboxActive]}
+              onPress={() => toggleCheckbox('robotDied')}
             >
-              <Text style={[styles.dropdownText, scores.cageHang === 'line' && styles.dropdownTextActive]}>
-                Line Park
+              <Text style={styles.checkboxText}>
+                Robot Died? {scores.robotDied ? '✓' : '✗'}
               </Text>
             </TouchableOpacity>
           </View>
+
+          <View style={styles.dropdownContainer}>
+            <Text style={styles.dropdownTitle}>Cage Hang</Text>
+            <View style={styles.dropdownButtons}>
+              <TouchableOpacity 
+                style={[styles.dropdownButton, scores.cageHang === 'deep' && styles.dropdownActive]}
+                onPress={() => setScores(prev => ({ ...prev, cageHang: 'deep' }))}
+              >
+                <Text style={[styles.dropdownText, scores.cageHang === 'deep' && styles.dropdownTextActive]}>
+                  Deep Cage
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.dropdownButton, scores.cageHang === 'shallow' && styles.dropdownActive]}
+                onPress={() => setScores(prev => ({ ...prev, cageHang: 'shallow' }))}
+              >
+                <Text style={[styles.dropdownText, scores.cageHang === 'shallow' && styles.dropdownTextActive]}>
+                  Shallow Cage
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.dropdownButton, scores.cageHang === 'line' && styles.dropdownActive]}
+                onPress={() => setScores(prev => ({ ...prev, cageHang: 'line' }))}
+              >
+                <Text style={[styles.dropdownText, scores.cageHang === 'line' && styles.dropdownTextActive]}>
+                  Line Park
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <CycleTimer
+            label="Scoring Cycle"
+            isRunning={cycleTimer.isRunning}
+            onToggle={toggleCycleTimer}
+            cycles={cycleTimer.cycles}
+            onUndo={undoCycle}
+          />
+
+          <Button
+            onPress={handleNext}
+            style={styles.button}
+            text="Next"
+          />
         </View>
-
-        <CycleTimer
-          label="Scoring Cycle"
-          isRunning={cycleTimer.isRunning}
-          onToggle={toggleCycleTimer}
-          cycles={cycleTimer.cycles}
-          onUndo={undoCycle}
-        />
-
-        <Button
-          onPress={handleNext}
-          style={styles.button}
-          text="Next"
-        />
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -404,14 +414,12 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     paddingBottom: 100,
-    backgroundColor: '#000',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',
-    color:'#F8F5F5',
   },
   content: {
     gap: 10,

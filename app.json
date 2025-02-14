@@ -8,10 +8,6 @@
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": false,
-    "runtimeVersion": "1.0.0",
-    "updates": {
-      "url": "https://u.expo.dev/7c99c989-3639-40c1-bb6a-2c9921966c22"
-    },
     "ios": {
       "supportsTablet": true
     },
@@ -20,7 +16,10 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.firstscouting.scoutingpass"
+      "package": "com.firstscouting.scoutingpass",
+      "enableProguardInReleaseBuilds": true,
+      "enableSeparateBuildPerCPUArchitecture": true,
+      "enableHermes": true
     },
     "web": {
       "bundler": "metro",
@@ -49,7 +48,6 @@
       "eas": {
         "projectId": "56c6ab98-fcb8-425b-baed-c2ff4b989ad7"
       }
-    },
-    "owner": "jdawg_08"
+    }
   }
 }

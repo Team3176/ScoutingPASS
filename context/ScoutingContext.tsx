@@ -8,6 +8,8 @@ interface ScoutingData {
   matchNumber: string;
   teamNumber: string;
   robotPosition: string;
+  redPoint: { x: number; y: number } | null;
+  bluePoint: { x: number; y: number } | null;
   clickedPoints: { x: number; y: number }[];
 
   // Autonomous data
@@ -20,6 +22,7 @@ interface ScoutingData {
   mobility: boolean;
   crossedLine: boolean;
   coralScoredLocation: 'barge' | 'processor' | 'both' | null;
+  autonScoringPositions: { x: number; y: number }[];
 
   // Teleop data
   teleopSpeakerScored: number;
@@ -65,6 +68,8 @@ const defaultScoutingData: ScoutingData = {
   matchNumber: '',
   teamNumber: '',
   robotPosition: '',
+  redPoint: null,
+  bluePoint: null,
   clickedPoints: [],
 
   // Autonomous defaults
@@ -77,6 +82,7 @@ const defaultScoutingData: ScoutingData = {
   mobility: false,
   crossedLine: false,
   coralScoredLocation: null,
+  autonScoringPositions: [],
 
   // Teleop defaults
   teleopSpeakerScored: 0,

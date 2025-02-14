@@ -14,84 +14,47 @@ export default function QRScreen() {
   const [qrValue, setQrValue] = useState('');
 
   useEffect(() => {
-    // Debug log to check autonomous coral scoring data
-    console.log('Autonomous Coral Scoring:', {
-      L1: scoutingData.autonCoralL1,
-      L2: scoutingData.autonCoralL2,
-      L3: scoutingData.autonCoralL3,
-      L4: scoutingData.autonCoralL4,
-    });
-
-    // Organize data into sections
-    const organizedData = {
-      timestamp: new Date().toISOString(),
-      prematch: {
-        scouterInitials: scoutingData.scouterInitials,
-        event: scoutingData.event,
-        matchLevel: scoutingData.matchLevel,
-        matchNumber: scoutingData.matchNumber,
-        teamNumber: scoutingData.teamNumber,
-        robotPosition: scoutingData.robotPosition,
-        startingPosition: scoutingData.clickedPoints,
-      },
-      autonomous: {
-        coralScoring: {
-          L1: scoutingData.autonCoralL1 || 0,
-          L2: scoutingData.autonCoralL2 || 0,
-          L3: scoutingData.autonCoralL3 || 0,
-          L4: scoutingData.autonCoralL4 || 0,
-        },
-        processorScore: scoutingData.autonProcessorScore || 0,
-        netScore: scoutingData.autonNetScore || 0,
-        mobility: scoutingData.mobility || false,
-        crossedLine: scoutingData.crossedLine || false,
-        coralScoredLocation: scoutingData.coralScoredLocation || null,
-      },
-      teleop: {
-        scoring: {
-          speakerScored: scoutingData.teleopSpeakerScored || 0,
-          ampScored: scoutingData.teleopAmpScored || 0,
-          notePickup: scoutingData.teleopNotePickup || 0,
-        },
-        coralScoring: {
-          L1: scoutingData.teleopCoralL1 || 0,
-          L2: scoutingData.teleopCoralL2 || 0,
-          L3: scoutingData.teleopCoralL3 || 0,
-          L4: scoutingData.teleopCoralL4 || 0,
-        },
-        processorScore: scoutingData.teleopProcessorScore || 0,
-        netScore: scoutingData.teleopNetScore || 0,
-        algae: {
-          processor: scoutingData.teleopAlgaeProcessor || 0,
-          net: scoutingData.teleopAlgaeNet || 0,
-        },
-        scoringCycles: scoutingData.scoringCycles || [],
-        scoredFarSide: scoutingData.scoredFarSide || false,
-        algaeRemoved: scoutingData.algaeRemoved || false,
-        robotDied: scoutingData.robotDied || false,
-        cageHang: scoutingData.cageHang || null,
-      },
-      endgame: {
-        robotStatus: {
-          onStage: scoutingData.onStage || false,
-          spotlit: scoutingData.spotlit || false,
-          harmony: scoutingData.harmony || false,
-          trap: scoutingData.trap || false,
-          parked: scoutingData.parked || false,
-        },
-        ratings: {
-          driverSkill: scoutingData.driverSkill || 1,
-          defenseRating: scoutingData.defenseRating || 1,
-          speedRating: scoutingData.speedRating || 1,
-        },
-        comments: scoutingData.comments || '',
-      },
+    // Create a simplified version of the data for the QR code
+    const qrData = {
+      s: scoutingData.scouterInitials,
+      e: scoutingData.event,
+      l: scoutingData.matchLevel,
+      m: scoutingData.matchNumber,
+      t: scoutingData.teamNumber,
+      r: scoutingData.robotPosition,
+      sp: scoutingData.clickedPoints,
+      // Autonomous
+      ac1: scoutingData.autonCoralL1,
+      ac2: scoutingData.autonCoralL2,
+      ac3: scoutingData.autonCoralL3,
+      ac4: scoutingData.autonCoralL4,
+      aps: scoutingData.autonProcessorScore,
+      ans: scoutingData.autonNetScore,
+      al: scoutingData.mobility,
+      acl: scoutingData.crossedLine,
+      asl: scoutingData.coralScoredLocation,
+      asp: scoutingData.autonScoringPositions,
+      // Teleop
+      tc1: scoutingData.teleopCoralL1,
+      tc2: scoutingData.teleopCoralL2,
+      tc3: scoutingData.teleopCoralL3,
+      tc4: scoutingData.teleopCoralL4,
+      tps: scoutingData.teleopProcessorScore,
+      tns: scoutingData.teleopNetScore,
+      // Endgame
+      os: scoutingData.onStage,
+      sl: scoutingData.spotlit,
+      h: scoutingData.harmony,
+      tr: scoutingData.trap,
+      p: scoutingData.parked,
+      ds: scoutingData.driverSkill,
+      dr: scoutingData.defenseRating,
+      sr: scoutingData.speedRating,
+      co: scoutingData.comments,
     };
 
-    // Debug log to check final organized data
-    console.log('Final QR Data:', JSON.stringify(organizedData, null, 2));
-
-    const jsonData = JSON.stringify(organizedData);
+    // Convert to JSON string for QR code
+    const jsonData = JSON.stringify(qrData);
     setQrValue(jsonData);
   }, [scoutingData]);
 

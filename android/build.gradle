@@ -6,7 +6,8 @@ buildscript {
         minSdkVersion = Integer.parseInt(findProperty('android.minSdkVersion') ?: '24')
         compileSdkVersion = Integer.parseInt(findProperty('android.compileSdkVersion') ?: '35')
         targetSdkVersion = Integer.parseInt(findProperty('android.targetSdkVersion') ?: '34')
-        kotlinVersion = findProperty('android.kotlinVersion') ?: '1.9.24'
+        kotlinVersion = '1.8.22'  // Downgraded to a version known to work with Compose
+        composeCompilerVersion = '1.4.8'  // Matching version for Kotlin 1.8.22
 
         ndkVersion = "26.1.10909125"
     }
@@ -17,7 +18,7 @@ buildscript {
     dependencies {
         classpath('com.android.tools.build:gradle')
         classpath('com.facebook.react:react-native-gradle-plugin')
-        classpath('org.jetbrains.kotlin:kotlin-gradle-plugin')
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
     }
 }
 
@@ -37,5 +38,34 @@ allprojects {
         google()
         mavenCentral()
         maven { url 'https://www.jitpack.io' }
+    }
+}
+
+// Force all subprojects to use the same Kotlin version
+subprojects {
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            android {
+                kotlinOptions {
+                    jvmTarget = "1.8"
+                }
+                if (project.hasProperty('composeOptions')) {
+                    composeOptions {
+                        kotlinCompilerExtensionVersion = composeCompilerVersion
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Force all subprojects to use the same Kotlin version
+allprojects {
+    configurations.all {
+        resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+            if (details.requested.group == 'org.jetbrains.kotlin') {
+                details.useVersion kotlinVersion
+            }
+        }
     }
 }
