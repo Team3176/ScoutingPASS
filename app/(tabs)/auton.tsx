@@ -9,6 +9,141 @@ import { useColorScheme } from 'react-native';
 import Colors from '../../constants/Colors';
 import { config_data } from './2025/reefscape_config.js';
 import { useScoutingData } from '../../context/ScoutingContext';
+import Svg, { Path, Circle, Text as SvgText } from 'react-native-svg';
+
+const HexagonField = React.memo(() => {
+  const size = Dimensions.get('window').width - 140;
+  const center = size / 2;
+  const hexRadius = size / 12;
+  const centerHexRadius = hexRadius * 0.4;
+  const [selectedSections, setSelectedSections] = useState<Set<string>>(new Set());
+
+  // Generate angles for the six corners
+  const cornerAngles = Array.from({ length: 6 }, (_, i) => (i * 2 * Math.PI) / 6);
+
+  // Calculate scales for each hexagon (matching the grid hexagons exactly)
+  const hexagonScales = [1.4, 2.5, 3.5, 4.5].map(scale => scale * hexRadius);
+
+  // Calculate label positions centered in each piece by finding midpoints
+  const allScales = [centerHexRadius, ...hexagonScales];
+  const labelPositions = allScales.slice(0, -1).map((currentScale, index) => {
+    const nextScale = allScales[index + 1];
+    const midpoint = (currentScale + nextScale) / 2;
+    // Add offset for L2, L3, L4 to move them down, with L2 slightly higher
+    let offset = 0;
+    if (index === 1) offset = 12;      // L2 stays higher
+    else if (index === 2) offset = 22;  // L3 keeps same offset
+    else if (index === 3) offset = 26;  // L4 moves down 2 more pixels
+    return {
+      x: center,
+      y: center - midpoint + offset,
+      text: `L${index + 1}`
+    };
+  });
+
+  // Helper function to get section ID
+  const getSectionId = (hexIndex: number, sectionIndex: number) => `${hexIndex}-${sectionIndex}`;
+
+  const handlePress = (event: any) => {
+    const { locationX, locationY } = event.nativeEvent;
+    const relativeX = locationX - center;
+    const relativeY = locationY - center;
+    const distance = Math.sqrt(relativeX * relativeX + relativeY * relativeY);
+
+    // Calculate angle in radians
+    let angle = Math.atan2(relativeY, relativeX);
+    if (angle < 0) angle += 2 * Math.PI;  // Convert to 0-2π range
+
+    // Determine which section was clicked (0-5)
+    const sectionIndex = Math.floor((angle / (2 * Math.PI) * 6 + 0.5) % 6);
+
+    // Find which hexagon was clicked
+    let hexIndex = -1;
+    if (distance <= centerHexRadius) {
+      hexIndex = 0;
+    } else {
+      for (let i = hexagonScales.length - 1; i >= 0; i--) {
+        if (distance <= hexagonScales[i]) {
+          hexIndex = i + 1;
+          break;
+        }
+      }
+    }
+
+    if (hexIndex !== -1) {
+      const sectionId = getSectionId(hexIndex, sectionIndex);
+      setSelectedSections(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(sectionId)) {
+          newSet.delete(sectionId);
+        } else {
+          newSet.add(sectionId);
+        }
+        return newSet;
+      });
+    }
+  };
+
+  const renderHexagonSection = (scale: number, hexIndex: number) => {
+    return cornerAngles.map((startAngle, sectionIndex) => {
+      const endAngle = startAngle + (2 * Math.PI) / 6;
+      const sectionId = getSectionId(hexIndex, sectionIndex);
+      
+      const startX = center + scale * Math.cos(startAngle);
+      const startY = center + scale * Math.sin(startAngle);
+      const endX = center + scale * Math.cos(endAngle);
+      const endY = center + scale * Math.sin(endAngle);
+      
+      return (
+        <Path
+          key={sectionId}
+          d={`
+            M ${center} ${center}
+            L ${startX} ${startY}
+            L ${endX} ${endY}
+            Z
+          `}
+          fill={selectedSections.has(sectionId) ? "#00FF00" : (hexIndex === 0 ? "#0000AA" : "none")}
+          stroke={hexIndex === 0 ? "#000" : "#666"}
+          strokeWidth={hexIndex === 0 ? "2" : "1"}
+        />
+      );
+    });
+  };
+
+  return (
+    <Svg width={size} height={size}>
+      {/* Center Hexagon Sections */}
+      {renderHexagonSection(centerHexRadius, 0)}
+      
+      {/* Outer Hexagon Sections */}
+      {hexagonScales.map((scale, index) => renderHexagonSection(scale, index + 1))}
+
+      {/* Labels */}
+      {labelPositions.map((label, i) => (
+        <SvgText
+          key={`label-${i}`}
+          x={label.x}
+          y={label.y}
+          fill="#FFF"
+          fontSize="14"
+          fontWeight="bold"
+          textAnchor="middle"
+          alignmentBaseline="middle"
+        >
+          {label.text}
+        </SvgText>
+      ))}
+
+      {/* Clickable overlay */}
+      <Path
+        d={`M 0 0 H ${size} V ${size} H 0 Z`}
+        fill="transparent"
+        onPress={handlePress}
+      />
+    </Svg>
+  );
+});
 
 const FieldImage = React.memo(() => (
   <Image
@@ -178,14 +313,48 @@ export default function AutonScreen() {
         ]}>{configJson.page_title} - Autonomous</Text>
         
         <View style={styles.content}>
-          <View style={styles.fieldImageContainer}>
-            <Text style={styles.imageLabel}>{scoringPositionsConfig?.name || "Scoring Positions"}</Text>
-            <View style={styles.imageWrapper}>
-              <RNView style={styles.imageContainer}>
-                <FieldImage />
-                <Dots points={scores.scoringPositions} />
-                <ClickableFieldOverlay onPress={handleImageClick} />
-              </RNView>
+          <View style={styles.fieldContainer}>
+            <View style={styles.playerSection}>
+              <Text style={styles.playerLabel}>Human Player 1</Text>
+            </View>
+            
+            <View style={styles.fieldContent}>
+              <View style={styles.leftSection} />
+              
+              <View style={styles.centerSection}>
+                <HexagonField />
+              </View>
+              
+              <View style={styles.rightSection}>
+                <View style={styles.scoreBox}>
+                  <Text style={styles.scoreLabel}>Score in Net</Text>
+                </View>
+              </View>
+            </View>
+            
+            <View style={styles.bottomSection}>
+              <View style={styles.playerSection}>
+                <Text style={styles.playerLabel}>Human Player 2</Text>
+              </View>
+              <View style={styles.processorSection}>
+                <Text style={styles.processorLabel}>Processor</Text>
+              </View>
+            </View>
+
+            <View style={styles.resultButtons}>
+              <TouchableOpacity 
+                style={[styles.resultButton, styles.successButton]}
+                onPress={() => setScores(prev => ({ ...prev, success: true, fail: false }))}
+              >
+                <Text style={styles.resultButtonText}>Success</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.resultButton, styles.failButton]}
+                onPress={() => setScores(prev => ({ ...prev, success: false, fail: true }))}
+              >
+                <Text style={styles.resultButtonText}>Fail</Text>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -324,29 +493,113 @@ export default function AutonScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    padding: 10,
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 10,
     textAlign: 'center',
   },
   content: {
-    gap: 20,
-    paddingBottom: 80,
+    gap: 10,
+    paddingBottom: 40,
     backgroundColor: 'transparent',
   },
-  mobilityButton: {
-    padding: 15,
-    borderRadius: 10,
+  fieldContainer: {
+    width: '100%',
+    aspectRatio: 0.8,
+    backgroundColor: '#333',
+    marginVertical: 10,
+    padding: 10,
+  },
+  fieldContent: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  leftSection: {
+    width: 60,
+  },
+  centerSection: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  mobilityActive: {},
-  mobilityText: {
+  rightSection: {
+    width: 60,
+    justifyContent: 'center',
+  },
+  playerSection: {
+    height: 30,
+    backgroundColor: '#00F',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+  },
+  playerLabel: {
+    color: '#FFF',
+    fontSize: 12,
+  },
+  bottomSection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  processorSection: {
+    height: 30,
+    backgroundColor: '#00F',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    width: 80,
+  },
+  processorLabel: {
+    color: '#FFF',
+    fontSize: 12,
+  },
+  scoreBox: {
+    backgroundColor: '#00F',
+    padding: 5,
+    width: '100%',
+    alignItems: 'center',
+  },
+  scoreLabel: {
+    color: '#FFF',
+    fontSize: 10,
+    textAlign: 'center',
+  },
+  resultButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 10,
+  },
+  resultButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    width: '45%',
+  },
+  successButton: {
+    backgroundColor: '#0F0',
+  },
+  failButton: {
+    backgroundColor: '#F00',
+  },
+  resultButtonText: {
+    color: '#FFF',
+    textAlign: 'center',
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#fff',
+  },
+  mobilityButton: {
+    backgroundColor: '#FF0000',
+    padding: 10,
+    borderRadius: 5,
+    marginVertical: 5,
+  },
+  mobilityActive: {
+    backgroundColor: '#00FF00',
+  },
+  mobilityText: {
+    color: '#FFFFFF',
+    textAlign: 'center',
   },
   button: {
     marginTop: 20,
@@ -377,24 +630,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
-  fieldImageContainer: {
-    marginVertical: 10,
-  },
-  imageLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 5,
-    textAlign: 'center',
-  },
-  imageWrapper: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  imageContainer: {
-    position: 'relative',
-    width: Dimensions.get('window').width - 40,
-    height: (Dimensions.get('window').width - 40) * 0.6,
-  },
   fieldImage: {
     width: '100%',
     height: '100%',
@@ -405,6 +640,5 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     backgroundColor: 'red',
-    zIndex: 1,
   },
-}); 
+} as const); 
