@@ -20,35 +20,38 @@ interface RadioButtonProps {
   onSelect: () => void;
 }
 
-const RadioButton: React.FC<RadioButtonProps> = ({ label, selected, onSelect }) => (
-  <TouchableOpacity 
-    style={[
-      {
-        flex: 1,
-        backgroundColor: 'transparent',
-        padding: 15,
-        borderRadius: 5,
-        alignItems: 'center',
-        borderWidth: 2,
-        borderColor: selected ? '#4CAF50' : '#ccc',
-      },
-      selected && {
-        backgroundColor: '#4CAF50',
-      }
-    ]}
-    onPress={onSelect}
-  >
-    <Text style={[
-      {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: selected ? '#fff' : '#ccc',
-      }
-    ]}>
-      {label}
-    </Text>
-  </TouchableOpacity>
-);
+const RadioButton: React.FC<RadioButtonProps> = ({ label, selected, onSelect }) => {
+  const colorScheme = useColorScheme();
+  return (
+    <TouchableOpacity 
+      style={[
+        {
+          flex: 1,
+          backgroundColor: 'transparent',
+          padding: 15,
+          borderRadius: 5,
+          alignItems: 'center',
+          borderWidth: 2,
+          borderColor: selected ? '#4CAF50' : colorScheme === 'dark' ? '#ffffff' : '#000000',
+        },
+        selected && {
+          backgroundColor: '#4CAF50',
+        }
+      ]}
+      onPress={onSelect}
+    >
+      <Text style={[
+        {
+          fontSize: 16,
+          fontWeight: 'bold',
+          color: selected ? '#fff' : colorScheme === 'dark' ? '#ffffff' : '#000000',
+        }
+      ]}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+};
 
 export default function PreMatchScreen() {
   const router = useRouter();
@@ -253,7 +256,7 @@ export default function PreMatchScreen() {
 
             <View style={styles.fieldImageContainer}>
               <Text style={styles.imageLabel}>Auton Start Position</Text>
-              <View style={[styles.imageWrapper, { width: imageWidth / 2 }]}>
+              <View style={[styles.imageWrapper]}>
                 <TouchableWithoutFeedback onPress={handleImageClick}>
                   <View>
                     <Image
@@ -262,42 +265,41 @@ export default function PreMatchScreen() {
                         styles.fieldImage,
                         {
                           width: imageWidth,
-                          transform: [
-                            { translateX: isBlueAlliance ? 0 : -imageWidth / 2 }
-                          ]
                         }
                       ]}
                       resizeMode="contain"
                     />
-                    {/* Show blue point */}
-                    {isBlueAlliance && scoutingData.bluePoint && (
-                      <View
-                        style={[
-                          styles.dot,
-                          {
-                            position: 'absolute',
-                            left: scoutingData.bluePoint.x - 5,
-                            top: scoutingData.bluePoint.y - 5,
-                            backgroundColor: '#0000FF',
-                            zIndex: 999
-                          },
-                        ]}
-                      />
-                    )}
-                    {/* Show red point */}
-                    {!isBlueAlliance && scoutingData.redPoint && (
-                      <View
-                        style={[
-                          styles.dot,
-                          {
-                            position: 'absolute',
-                            left: scoutingData.redPoint.x - 5,
-                            top: scoutingData.redPoint.y - 5,
-                            backgroundColor: '#FF0000',
-                            zIndex: 999
-                          },
-                        ]}
-                      />
+                    {/* Show point with color based on alliance */}
+                    {isBlueAlliance ? (
+                      scoutingData.bluePoint && (
+                        <View
+                          style={[
+                            styles.dot,
+                            {
+                              position: 'absolute',
+                              left: scoutingData.bluePoint.x - 5,
+                              top: scoutingData.bluePoint.y - 5,
+                              backgroundColor: '#0000FF',
+                              zIndex: 999
+                            },
+                          ]}
+                        />
+                      )
+                    ) : (
+                      scoutingData.redPoint && (
+                        <View
+                          style={[
+                            styles.dot,
+                            {
+                              position: 'absolute',
+                              left: scoutingData.redPoint.x - 5,
+                              top: scoutingData.redPoint.y - 5,
+                              backgroundColor: '#FF0000',
+                              zIndex: 999
+                            },
+                          ]}
+                        />
+                      )
                     )}
                   </View>
                 </TouchableWithoutFeedback>
@@ -320,7 +322,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    paddingBottom: 100,
     backgroundColor: '#000',
   },
   content: {
