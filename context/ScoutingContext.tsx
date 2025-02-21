@@ -52,6 +52,8 @@ interface ScoutingData {
   defenseRating: number;
   speedRating: number;
   comments: string;
+  redAllianceScore: string;
+  blueAllianceScore: string;
 }
 
 interface ScoutingContextType {
@@ -112,6 +114,8 @@ const defaultScoutingData: ScoutingData = {
   defenseRating: 1,
   speedRating: 1,
   comments: '',
+  redAllianceScore: '',
+  blueAllianceScore: '',
 };
 
 const ScoutingContext = createContext<ScoutingContextType | undefined>(undefined);

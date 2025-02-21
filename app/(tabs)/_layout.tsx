@@ -1,7 +1,7 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Tabs } from 'expo-router';
 import { useColorScheme } from 'react-native';
 import Colors from '../../constants/Colors';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 function TabBarIcon(props: {
   name: React.ComponentProps<typeof FontAwesome>['name'];
@@ -11,26 +11,25 @@ function TabBarIcon(props: {
 }
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme() ?? 'light';
+  const colorScheme = useColorScheme();
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors.light.buttonBackground,
-        tabBarInactiveTintColor: Colors[colorScheme].tabIconDefault,
-        headerShown: true,
+        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerStyle: {
-          backgroundColor: colorScheme === 'dark' ? '#2F2F2F' : '#fff',
+          backgroundColor: colorScheme === 'dark' ? '#000' : '#fff',
         },
-        headerTintColor: Colors[colorScheme].text,
+        headerTintColor: colorScheme === 'dark' ? '#fff' : '#000',
         tabBarStyle: {
-          backgroundColor: colorScheme === 'dark' ? '#2F2F2F' : '#fff',
+          backgroundColor: colorScheme === 'dark' ? '#000' : '#fff',
         },
       }}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Pre-Match',
+          headerTitle: 'Pre-Match',
           tabBarIcon: ({ color }) => <TabBarIcon name="clipboard" color={color} />,
         }}
       />

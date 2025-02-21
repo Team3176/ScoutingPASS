@@ -74,15 +74,7 @@ export default function TeleopScreen() {
   const colorScheme = useColorScheme();
 
   const [scores, setScores] = useState({
-    speakerScored: scoutingData.teleopSpeakerScored,
-    ampScored: scoutingData.teleopAmpScored,
     notePickup: scoutingData.teleopNotePickup,
-    coralL1: scoutingData.teleopCoralL1,
-    coralL2: scoutingData.teleopCoralL2,
-    coralL3: scoutingData.teleopCoralL3,
-    coralL4: scoutingData.teleopCoralL4,
-    processorScore: scoutingData.teleopProcessorScore,
-    netScore: scoutingData.teleopNetScore,
     algaeProcessor: scoutingData.teleopAlgaeProcessor,
     algaeNet: scoutingData.teleopAlgaeNet,
     scoredFarSide: scoutingData.scoredFarSide || false,
@@ -100,15 +92,7 @@ export default function TeleopScreen() {
   // Update local state when context changes (e.g. when form is cleared)
   useEffect(() => {
     setScores({
-      speakerScored: scoutingData.teleopSpeakerScored,
-      ampScored: scoutingData.teleopAmpScored,
       notePickup: scoutingData.teleopNotePickup,
-      coralL1: scoutingData.teleopCoralL1,
-      coralL2: scoutingData.teleopCoralL2,
-      coralL3: scoutingData.teleopCoralL3,
-      coralL4: scoutingData.teleopCoralL4,
-      processorScore: scoutingData.teleopProcessorScore,
-      netScore: scoutingData.teleopNetScore,
       algaeProcessor: scoutingData.teleopAlgaeProcessor,
       algaeNet: scoutingData.teleopAlgaeNet,
       scoredFarSide: scoutingData.scoredFarSide || false,
@@ -176,18 +160,10 @@ export default function TeleopScreen() {
 
   const handleNext = () => {
     updateScoutingData({
-      teleopSpeakerScored: scores.speakerScored,
-      teleopAmpScored: scores.ampScored,
       teleopNotePickup: scores.notePickup,
-      scoringCycles: cycleTimer.cycles,
-      teleopCoralL1: scores.coralL1,
-      teleopCoralL2: scores.coralL2,
-      teleopCoralL3: scores.coralL3,
-      teleopCoralL4: scores.coralL4,
-      teleopProcessorScore: scores.processorScore,
-      teleopNetScore: scores.netScore,
       teleopAlgaeProcessor: scores.algaeProcessor,
       teleopAlgaeNet: scores.algaeNet,
+      scoringCycles: cycleTimer.cycles,
       scoredFarSide: scores.scoredFarSide,
       algaeRemoved: scores.algaeRemoved,
       robotDied: scores.robotDied,
@@ -223,82 +199,6 @@ export default function TeleopScreen() {
         ]}>{configJson.page_title} - Teleop</Text>
         
         <View style={styles.content}>
-          <View style={styles.counterRow}>
-            <View style={styles.counterWrapper}>
-              <Counter
-                label={coralL1Config?.name || "Coral L1"}
-                value={scores.coralL1}
-                onIncrement={() => handleIncrement('coralL1')}
-                onDecrement={() => handleDecrement('coralL1')}
-              />
-            </View>
-            <View style={styles.counterWrapper}>
-              <Counter
-                label={coralL2Config?.name || "Coral L2"}
-                value={scores.coralL2}
-                onIncrement={() => handleIncrement('coralL2')}
-                onDecrement={() => handleDecrement('coralL2')}
-              />
-            </View>
-          </View>
-
-          <View style={styles.counterRow}>
-            <View style={styles.counterWrapper}>
-              <Counter
-                label={coralL3Config?.name || "Coral L3"}
-                value={scores.coralL3}
-                onIncrement={() => handleIncrement('coralL3')}
-                onDecrement={() => handleDecrement('coralL3')}
-              />
-            </View>
-            <View style={styles.counterWrapper}>
-              <Counter
-                label={coralL4Config?.name || "Coral L4"}
-                value={scores.coralL4}
-                onIncrement={() => handleIncrement('coralL4')}
-                onDecrement={() => handleDecrement('coralL4')}
-              />
-            </View>
-          </View>
-
-          <View style={styles.counterRow}>
-            <View style={styles.counterWrapper}>
-              <Counter
-                label={processorScoreConfig?.name || "Processor Score"}
-                value={scores.processorScore}
-                onIncrement={() => handleIncrement('processorScore')}
-                onDecrement={() => handleDecrement('processorScore')}
-              />
-            </View>
-            <View style={styles.counterWrapper}>
-              <Counter
-                label={netScoreConfig?.name || "Net Score"}
-                value={scores.netScore}
-                onIncrement={() => handleIncrement('netScore')}
-                onDecrement={() => handleDecrement('netScore')}
-              />
-            </View>
-          </View>
-
-          <View style={styles.counterRow}>
-            <View style={styles.counterWrapper}>
-              <Counter
-                label="Speaker Scored"
-                value={scores.speakerScored}
-                onIncrement={() => handleIncrement('speakerScored')}
-                onDecrement={() => handleDecrement('speakerScored')}
-              />
-            </View>
-            <View style={styles.counterWrapper}>
-              <Counter
-                label="Amp Scored"
-                value={scores.ampScored}
-                onIncrement={() => handleIncrement('ampScored')}
-                onDecrement={() => handleDecrement('ampScored')}
-              />
-            </View>
-          </View>
-
           <View style={styles.counterRow}>
             <View style={styles.counterWrapper}>
               <Counter

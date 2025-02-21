@@ -1,18 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, Image, TouchableOpacity, TouchableWithoutFeedback, Dimensions, View as RNView, Modal } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, Image, TouchableOpacity, TouchableWithoutFeedback, Dimensions, View as RNView, Modal, useColorScheme } from 'react-native';
 import { Text, View, TextInput } from '../../components/Themed';
 import { ScrollView } from 'react-native-gesture-handler';
 import { useRouter } from 'expo-router';
 import { Button } from '../../components/ui/Button';
 import { useScoutingData } from '../../context/ScoutingContext';
 import { config_data } from './2025/reefscape_config.js';
-import { useColorScheme } from 'react-native';
 import Colors from '../../constants/Colors';
-
-interface Point {
-  x: number;
-  y: number;
-}
 
 interface RadioButtonProps {
   label: string;
@@ -27,7 +21,7 @@ const RadioButton: React.FC<RadioButtonProps> = ({ label, selected, onSelect }) 
       style={[
         {
           flex: 1,
-          backgroundColor: 'transparent',
+          backgroundColor: colorScheme === 'dark' ? '#2F2F2F' : 'transparent',
           padding: 15,
           borderRadius: 5,
           alignItems: 'center',
@@ -59,6 +53,7 @@ export default function PreMatchScreen() {
   const configJson = JSON.parse(config_data);
   const colorScheme = useColorScheme() ?? 'light';
   const [showMatchLevelDropdown, setShowMatchLevelDropdown] = useState(false);
+  const [isMapFlipped, setIsMapFlipped] = useState(false);
 
   const handleInputChange = (field: string, value: string) => {
     updateScoutingData({ [field]: value });
@@ -169,7 +164,7 @@ export default function PreMatchScreen() {
                         setShowMatchLevelDropdown(false);
                       }}
                     >
-                      <Text style={{ color: '#000000' }}>Qualifications</Text>
+                      <Text style={{ color: colorScheme === 'dark' ? '#ffffff' : '#000000' }}>Qualifications</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.dropdownItem}
@@ -178,7 +173,7 @@ export default function PreMatchScreen() {
                         setShowMatchLevelDropdown(false);
                       }}
                     >
-                      <Text style={{ color: '#000000' }}>Eliminations</Text>
+                      <Text style={{ color: colorScheme === 'dark' ? '#ffffff' : '#000000' }}>Eliminations</Text>
                     </TouchableOpacity>
                   </View>
                 </TouchableOpacity>
@@ -265,6 +260,7 @@ export default function PreMatchScreen() {
                         styles.fieldImage,
                         {
                           width: imageWidth,
+                          transform: [{ scaleX: isMapFlipped ? -1 : 1 }]
                         }
                       ]}
                       resizeMode="contain"
@@ -277,7 +273,7 @@ export default function PreMatchScreen() {
                             styles.dot,
                             {
                               position: 'absolute',
-                              left: scoutingData.bluePoint.x - 5,
+                              left: isMapFlipped ? (imageWidth - scoutingData.bluePoint.x - 5) : (scoutingData.bluePoint.x - 5),
                               top: scoutingData.bluePoint.y - 5,
                               backgroundColor: '#0000FF',
                               zIndex: 999
@@ -292,7 +288,7 @@ export default function PreMatchScreen() {
                             styles.dot,
                             {
                               position: 'absolute',
-                              left: scoutingData.redPoint.x - 5,
+                              left: isMapFlipped ? (imageWidth - scoutingData.redPoint.x - 5) : (scoutingData.redPoint.x - 5),
                               top: scoutingData.redPoint.y - 5,
                               backgroundColor: '#FF0000',
                               zIndex: 999
@@ -304,6 +300,12 @@ export default function PreMatchScreen() {
                   </View>
                 </TouchableWithoutFeedback>
               </View>
+              <TouchableOpacity 
+                style={styles.flipButton}
+                onPress={() => setIsMapFlipped(!isMapFlipped)}
+              >
+                <Text style={styles.flipButtonText}>Flip Map</Text>
+              </TouchableOpacity>
             </View>
 
             <Button
@@ -397,7 +399,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dropdownModal: {
-    width: '80%',  // Take up 80% of screen width
+    width: '80%',
     borderRadius: 5,
     elevation: 5,
     shadowColor: '#000',
@@ -417,9 +419,9 @@ const styles = StyleSheet.create({
     gap: 15,
   },
   robotSection: {
-    backgroundColor: Colors.light.cardBackground,
     padding: 10,
     borderRadius: 5,
+    backgroundColor: 'transparent',
   },
   robotSectionTitle: {
     fontSize: 16,
@@ -432,22 +434,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 10,
   },
-  robotRadioButton: {
-    flex: 1,
-    backgroundColor: '#2F2F2F',
-    padding: 15,
+  flipButton: {
+    backgroundColor: '#2196F3',
+    padding: 10,
     borderRadius: 5,
-    alignItems: 'center',
+    marginTop: 10,
+    alignSelf: 'center',
   },
-  robotRadioButtonSelected: {
-    backgroundColor: '#4CAF50',
-  },
-  robotRadioButtonText: {
+  flipButtonText: {
+    color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#fff',
-  },
-  robotRadioButtonTextSelected: {
-    color: '#fff',
   },
 });
