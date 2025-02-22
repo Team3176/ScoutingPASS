@@ -6,51 +6,51 @@ import { Button } from '../../components/ui/Button';
 import QRCode from 'react-native-qrcode-svg';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter } from 'expo-router';
-import { useScoutingData } from '../../context/ScoutingContext';
+import { useScoutingData, defaultScoutingData } from '../../context/ScoutingContext';
 
 export default function QRScreen() {
   const router = useRouter();
-  const { scoutingData, clearScoutingData } = useScoutingData();
+  const { scoutingData, setScoutingData } = useScoutingData();
   const [qrValue, setQrValue] = useState('');
 
   useEffect(() => {
     // Create a simplified version of the data for the QR code
     const qrData = {
-      s: scoutingData.scouterInitials,
-      e: scoutingData.event,
-      l: scoutingData.matchLevel,
-      m: scoutingData.matchNumber,
-      t: scoutingData.teamNumber,
-      r: scoutingData.robotPosition,
-      sp: scoutingData.clickedPoints,
-      // Autonomous
-      ac1: scoutingData.autonCoralL1,
-      ac2: scoutingData.autonCoralL2,
-      ac3: scoutingData.autonCoralL3,
-      ac4: scoutingData.autonCoralL4,
-      aps: scoutingData.autonProcessorScore,
-      ans: scoutingData.autonNetScore,
-      al: scoutingData.mobility,
-      acl: scoutingData.crossedLine,
-      asl: scoutingData.coralScoredLocation,
-      asp: scoutingData.autonScoringPositions,
-      // Teleop
-      tc1: scoutingData.teleopCoralL1,
-      tc2: scoutingData.teleopCoralL2,
-      tc3: scoutingData.teleopCoralL3,
-      tc4: scoutingData.teleopCoralL4,
-      tps: scoutingData.teleopProcessorScore,
-      tns: scoutingData.teleopNetScore,
-      // Endgame
-      os: scoutingData.onStage,
-      sl: scoutingData.spotlit,
-      h: scoutingData.harmony,
-      tr: scoutingData.trap,
-      p: scoutingData.parked,
-      ds: scoutingData.driverSkill,
-      dr: scoutingData.defenseRating,
-      sr: scoutingData.speedRating,
-      co: scoutingData.comments,
+      scouter_name: scoutingData.scouterInitials,
+      event: scoutingData.event,
+      level: scoutingData.matchLevel === 'Qualifications' ? 'quals' : 'elims',
+      match_num: scoutingData.matchNumber,
+      team_num: scoutingData.teamNumber,
+      robot: scoutingData.robotPosition,
+      starting_pos: scoutingData.robotPosition?.startsWith('r') ? scoutingData.redPoint : scoutingData.bluePoint,
+      // Autonomous - Arrays of 1s and 0s for each button press
+      L1_auton: Array.isArray(scoutingData.autonCoralL1) ? scoutingData.autonCoralL1 : [],
+      L2_auton: Array.isArray(scoutingData.autonCoralL2) ? scoutingData.autonCoralL2 : [],
+      L3_auton: Array.isArray(scoutingData.autonCoralL3) ? scoutingData.autonCoralL3 : [],
+      L4_auton: Array.isArray(scoutingData.autonCoralL4) ? scoutingData.autonCoralL4 : [],
+      floor: Array.isArray(scoutingData.autonProcessorScore) ? scoutingData.autonProcessorScore : [],
+      human_feed: Array.isArray(scoutingData.autonNetScore) ? scoutingData.autonNetScore : [],
+      processor: Array.isArray(scoutingData.mobility) ? scoutingData.mobility : [],
+      barge: Array.isArray(scoutingData.crossedLine) ? scoutingData.crossedLine : [],
+      start_line: Array.isArray(scoutingData.crossedLine) && scoutingData.crossedLine[0] === 1 ? 1 : 0,
+      // Teleop - Arrays of 1s and 0s for each button press
+      L1_teleop: Array.isArray(scoutingData.teleopCoralL1) ? scoutingData.teleopCoralL1 : [],
+      L2_teleop: Array.isArray(scoutingData.teleopCoralL2) ? scoutingData.teleopCoralL2 : [],
+      L3_teleop: Array.isArray(scoutingData.teleopCoralL3) ? scoutingData.teleopCoralL3 : [],
+      L4_teleop: Array.isArray(scoutingData.teleopCoralL4) ? scoutingData.teleopCoralL4 : [],
+      floor_teleop: Array.isArray(scoutingData.teleopProcessorScore) ? scoutingData.teleopProcessorScore : [],
+      human_teleop: Array.isArray(scoutingData.teleopNetScore) ? scoutingData.teleopNetScore : [],
+      process_teleop: Array.isArray(scoutingData.teleopAlgaeProcessor) ? scoutingData.teleopAlgaeProcessor : [],
+      barge_teleop: Array.isArray(scoutingData.teleopAlgaeNet) ? scoutingData.teleopAlgaeNet : [],
+      penalties: scoutingData.defenseRating,
+      defense: scoutingData.playedDefense ? 1 : 0,
+      died: scoutingData.robotDied ? 1 : 0,
+      deep_climb: scoutingData.driverSkill === 'not_attempted' ? 'na' : scoutingData.driverSkill === 'failed' ? 'fail' : 'success',
+      shallow_climb: scoutingData.speedRating === 'not_attempted' ? 'na' : scoutingData.speedRating === 'failed' ? 'fail' : 'success',
+      parked: scoutingData.parked === 'not_attempted' ? 'na' : scoutingData.parked === 'failed' ? 'fail' : 'success',
+      comments: scoutingData.comments,
+      red_scores: scoutingData.redAllianceScore,
+      blue_scores: scoutingData.blueAllianceScore,
     };
 
     // Convert to JSON string for QR code
@@ -73,8 +73,8 @@ export default function QRScreen() {
   };
 
   const handleClear = () => {
-    clearScoutingData(); // Reset all form data
-    router.replace('/'); // Navigate back to the index page
+    setScoutingData(defaultScoutingData);
+    router.replace('/');
   };
 
   return (

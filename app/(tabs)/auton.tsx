@@ -6,65 +6,40 @@ import { useRouter } from 'expo-router';
 import { Button } from '../../components/ui/Button';
 import Colors from '../../constants/Colors';
 import { config_data } from './2025/reefscape_config.js';
-import { useScoutingData } from '../../context/ScoutingContext';
-import Svg, { Path, Circle, Text as SvgText } from 'react-native-svg';
+import { useScoutingData, ScoutingData } from '../../context/ScoutingContext';
+import Svg, { Path, Circle, Text as SvgText, G } from 'react-native-svg';
 
-const HexagonField = React.memo(() => {
+interface HexagonFieldProps {
+  onLabelPress: (labelIndex: number) => void;
+  selectedLabels: Set<number>;
+  activePromptLabel: number | null;
+}
+
+const HexagonField: React.FC<HexagonFieldProps> = React.memo(({ onLabelPress, selectedLabels, activePromptLabel }) => {
   const size = Dimensions.get('window').width - 40;
   const center = size / 2;
   const hexRadius = size / 12;
   const centerHexRadius = hexRadius * 0.4;
-  const [selectedRings, setSelectedRings] = useState<Set<number>>(new Set());
-  const [flashingRing, setFlashingRing] = useState<number | null>(null);
+  const [flashingLabel, setFlashingLabel] = useState<number | null>(null);
 
   // Generate angles for the six corners
   const cornerAngles = Array.from({ length: 6 }, (_, i) => (i * 2 * Math.PI) / 6);
 
-  // Calculate scales for each hexagon
+  // Calculate scales for each hexagon with original spacing
   const hexagonScales = [1.8, 3.0, 4.2, 5.4].map(scale => scale * hexRadius);
 
-  // Calculate positions for each ring
+  // Calculate positions for each ring with proportional spacing
   const ringPositions = [
-    { scale: centerHexRadius, y: 0 },  // Center (L1)
-    { scale: hexagonScales[0], y: hexagonScales[0] / 4 },  // L2
-    { scale: hexagonScales[1], y: hexagonScales[1] / 4 },  // L3
-    { scale: hexagonScales[2], y: (hexagonScales[2] / 4) - 60 },  // L4 (moved up 60px)
+    { scale: centerHexRadius, y: center },  // Center (L1)
+    { scale: hexagonScales[0], y: center - (hexagonScales[0] * 0.65) },  // L2
+    { scale: hexagonScales[1], y: center - (hexagonScales[1] * 0.65) },  // L3
+    { scale: hexagonScales[2], y: center - (hexagonScales[2] * 0.65) },  // L4
   ];
 
-  const handlePress = (event: any) => {
-    const { locationX, locationY } = event.nativeEvent;
-    const relativeX = locationX - center;
-    const relativeY = locationY - center;
-    const distance = Math.sqrt(relativeX * relativeX + relativeY * relativeY);
-
-    // Find which hexagon was clicked
-    let hexIndex = -1;
-    if (distance <= centerHexRadius) {
-      hexIndex = 0;
-    } else {
-      for (let i = hexagonScales.length - 1; i >= 0; i--) {
-        if (distance <= hexagonScales[i]) {
-          hexIndex = i + 1;
-          break;
-        }
-      }
-    }
-
-    if (hexIndex !== -1) {
-      // Flash the entire ring
-      setFlashingRing(hexIndex);
-      setTimeout(() => setFlashingRing(null), 200);
-
-      setSelectedRings(prev => {
-        const newSet = new Set(prev);
-        if (newSet.has(hexIndex)) {
-          newSet.delete(hexIndex);
-        } else {
-          newSet.add(hexIndex);
-        }
-        return newSet;
-      });
-    }
+  const handleLabelPress = (labelIndex: number) => {
+    setFlashingLabel(labelIndex);
+    setTimeout(() => setFlashingLabel(null), 150);
+    onLabelPress(labelIndex);
   };
 
   const renderHexagon = (scale: number, hexIndex: number) => {
@@ -81,7 +56,7 @@ const HexagonField = React.memo(() => {
       <Path
         key={`hexagon-${hexIndex}`}
         d={pathData}
-        fill={flashingRing === hexIndex ? "#00FF00" : (selectedRings.has(hexIndex) ? "#00FF00" : "none")}
+        fill="none"
         stroke={hexIndex === 0 ? "#000" : "#666"}
         strokeWidth={hexIndex === 0 ? "2" : "1"}
       />
@@ -89,36 +64,41 @@ const HexagonField = React.memo(() => {
   };
 
   return (
-    <Svg width={size} height={size}>
-      {/* Center Hexagon */}
-      {renderHexagon(centerHexRadius, 0)}
-      
-      {/* Outer Hexagons */}
-      {hexagonScales.map((scale, index) => renderHexagon(scale, index + 1))}
+    <View style={{ width: size, height: size }}>
+      <Svg width={size} height={size} style={StyleSheet.absoluteFill}>
+        {renderHexagon(centerHexRadius, 0)}
+        {hexagonScales.map((scale, index) => renderHexagon(scale, index + 1))}
+      </Svg>
 
-      {/* Labels */}
-      {ringPositions.map((ring, i) => (
-        <SvgText
+      {ringPositions.map((pos, i) => (
+        <TouchableOpacity
           key={`label-${i}`}
-          x={center}
-          y={center + ring.y}
-          fill="#FFF"
-          fontSize="18"
-          fontWeight="bold"
-          textAnchor="middle"
-          alignmentBaseline="middle"
+          style={[
+            styles.labelButton,
+            {
+              position: 'absolute',
+              left: center - (hexRadius * 0.5),
+              top: pos.y - (hexRadius * 0.5),
+              width: hexRadius,
+              height: hexRadius,
+              borderRadius: hexRadius * 0.5,
+              backgroundColor: flashingLabel === i ? '#666666' : '#444444',
+            }
+          ]}
+          onPress={() => handleLabelPress(i)}
         >
-          {`L${i + 1}`}
-        </SvgText>
+          <Text style={[
+            styles.labelText,
+            {
+              fontSize: hexRadius * 0.6,
+            },
+            activePromptLabel === i && { color: '#00FF00' }
+          ]}>
+            {`L${i + 1}`}
+          </Text>
+        </TouchableOpacity>
       ))}
-
-      {/* Clickable overlay */}
-      <Path
-        d={`M 0 0 H ${size} V ${size} H 0 Z`}
-        fill="transparent"
-        onPress={handlePress}
-      />
-    </Svg>
+    </View>
   );
 });
 
@@ -154,6 +134,16 @@ const ClickableFieldOverlay = React.memo(({ onPress }: { onPress: (event: any) =
   />
 ));
 
+interface Scores {
+  mobility: number[];
+  crossedLine: number[];
+  scoringPositions: { x: number; y: number }[];
+  floorPickup: boolean;
+  humanFeed: boolean;
+  processor: boolean;
+  barge: boolean;
+}
+
 export default function AutonScreen() {
   const router = useRouter();
   const configJson = JSON.parse(config_data);
@@ -161,22 +151,25 @@ export default function AutonScreen() {
   const { scoutingData, updateScoutingData } = useScoutingData();
   const colorScheme = useColorScheme() ?? 'light';
 
-  const [scores, setScores] = useState({
-    mobility: scoutingData.mobility,
-    crossedLine: scoutingData.crossedLine || false,
-    coralScoredLocation: scoutingData.coralScoredLocation || null,
-    scoringPositions: scoutingData.autonScoringPositions || [],
+  const [scores, setScores] = useState<Scores>({
+    mobility: [],
+    crossedLine: [],
+    scoringPositions: [],
     floorPickup: false,
     humanFeed: false,
     processor: false,
-    barge: false,
+    barge: false
   });
+
+  const [selectedLabels, setSelectedLabels] = useState<Set<number>>(new Set());
+  const [selectedLabelForPrompt, setSelectedLabelForPrompt] = useState<number | null>(null);
+  const [selectedPickupForPrompt, setSelectedPickupForPrompt] = useState<string | null>(null);
+  const [showPrompt, setShowPrompt] = useState(false);
 
   useEffect(() => {
     setScores({
       mobility: scoutingData.mobility,
-      crossedLine: scoutingData.crossedLine || false,
-      coralScoredLocation: scoutingData.coralScoredLocation || null,
+      crossedLine: scoutingData.crossedLine || [],
       scoringPositions: scoutingData.autonScoringPositions || [],
       floorPickup: false,
       humanFeed: false,
@@ -185,13 +178,64 @@ export default function AutonScreen() {
     });
   }, [scoutingData]);
 
+  const handlePromptResponse = (success: boolean) => {
+    if (selectedLabelForPrompt === null && selectedPickupForPrompt === null) return;
+    
+    const value = success ? 1 : 0;
+    const newData: Partial<ScoutingData> = {};
+    
+    if (selectedLabelForPrompt !== null) {
+      const labelId = `L${selectedLabelForPrompt + 1}`;
+      switch (labelId) {
+        case 'L1':
+          newData.autonCoralL1 = [...scoutingData.autonCoralL1, value];
+          break;
+        case 'L2':
+          newData.autonCoralL2 = [...scoutingData.autonCoralL2, value];
+          break;
+        case 'L3':
+          newData.autonCoralL3 = [...scoutingData.autonCoralL3, value];
+          break;
+        case 'L4':
+          newData.autonCoralL4 = [...scoutingData.autonCoralL4, value];
+          break;
+      }
+    } else if (selectedPickupForPrompt) {
+      switch (selectedPickupForPrompt) {
+        case 'Floor Pickup':
+          newData.autonProcessorScore = [...scoutingData.autonProcessorScore, value];
+          break;
+        case 'Human Feed':
+          newData.autonNetScore = [...scoutingData.autonNetScore, value];
+          break;
+        case 'Processor':
+          newData.mobility = [...scoutingData.mobility, value];
+          break;
+        case 'Barge':
+          newData.crossedLine = [...(scoutingData.crossedLine || []), value];
+          break;
+      }
+    }
+    
+    updateScoutingData(newData);
+    setShowPrompt(false);
+    setSelectedLabelForPrompt(null);
+    setSelectedPickupForPrompt(null);
+  };
+
+  const handleLabelPress = (labelId: number) => {
+    setSelectedLabelForPrompt(labelId);
+    setSelectedPickupForPrompt(null);
+    setShowPrompt(true);
+  };
+
+  const handlePickupPress = (pickup: string) => {
+    setSelectedPickupForPrompt(pickup);
+    setSelectedLabelForPrompt(null);
+    setShowPrompt(true);
+  };
+
   const handleNext = () => {
-    updateScoutingData({
-      mobility: scores.mobility,
-      crossedLine: scores.crossedLine,
-      coralScoredLocation: scores.coralScoredLocation,
-      autonScoringPositions: scores.scoringPositions,
-    });
     router.push('/teleop');
   };
 
@@ -215,23 +259,79 @@ export default function AutonScreen() {
             <View style={styles.fieldContent}>
               <View style={styles.leftSection} />
               <View style={styles.centerSection}>
-                <HexagonField />
+                <HexagonField 
+                  onLabelPress={handleLabelPress}
+                  selectedLabels={selectedLabels}
+                  activePromptLabel={selectedLabelForPrompt}
+                />
               </View>
               <View style={styles.rightSection} />
             </View>
           </View>
 
+          {(selectedLabelForPrompt !== null || selectedPickupForPrompt !== null) && (
+            <View style={[styles.promptContainer]}>
+              <Text style={{ color: '#FFF', fontSize: 18, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' }}>
+                {selectedLabelForPrompt !== null ? `L${selectedLabelForPrompt + 1}` : selectedPickupForPrompt} Score:
+              </Text>
+              <View style={{ flexDirection: 'row', gap: 20, backgroundColor: 'transparent' }}>
+                <TouchableOpacity 
+                  style={{
+                    width: 50,
+                    height: 50,
+                    borderRadius: 25,
+                    backgroundColor: '#4CAF50',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    elevation: 0,
+                    shadowColor: 'transparent',
+                    shadowOffset: { width: 0, height: 0 },
+                    shadowOpacity: 0,
+                    shadowRadius: 0,
+                  }}
+                  onPress={() => handlePromptResponse(true)}
+                >
+                  <Text style={{ color: '#FFF', fontSize: 24, fontWeight: 'bold' }}>✓</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={{
+                    width: 50,
+                    height: 50,
+                    borderRadius: 25,
+                    backgroundColor: '#FF0000',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    elevation: 0,
+                    shadowColor: 'transparent',
+                    shadowOffset: { width: 0, height: 0 },
+                    shadowOpacity: 0,
+                    shadowRadius: 0,
+                  }}
+                  onPress={() => handlePromptResponse(false)}
+                >
+                  <Text style={{ color: '#FFF', fontSize: 24, fontWeight: 'bold' }}>✗</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
           <View style={styles.buttonsContainer}>
             <View style={styles.buttonRow}>
               <TouchableOpacity 
-                style={[styles.pickupButton, scores.floorPickup && styles.pickupButtonActive]} 
-                onPress={() => setScores(prev => ({ ...prev, floorPickup: !prev.floorPickup }))}
+                style={[
+                  styles.pickupButton, 
+                  selectedPickupForPrompt === 'Floor Pickup' && styles.pickupButtonActive
+                ]} 
+                onPress={() => handlePickupPress('Floor Pickup')}
               >
                 <Text style={styles.pickupButtonText}>Floor Pickup</Text>
               </TouchableOpacity>
               <TouchableOpacity 
-                style={[styles.pickupButton, scores.humanFeed && styles.pickupButtonActive]}
-                onPress={() => setScores(prev => ({ ...prev, humanFeed: !prev.humanFeed }))}
+                style={[
+                  styles.pickupButton, 
+                  selectedPickupForPrompt === 'Human Feed' && styles.pickupButtonActive
+                ]}
+                onPress={() => handlePickupPress('Human Feed')}
               >
                 <Text style={styles.pickupButtonText}>Human Feed</Text>
               </TouchableOpacity>
@@ -239,14 +339,20 @@ export default function AutonScreen() {
 
             <View style={styles.buttonRow}>
               <TouchableOpacity 
-                style={[styles.pickupButton, scores.processor && styles.pickupButtonActive]} 
-                onPress={() => setScores(prev => ({ ...prev, processor: !prev.processor }))}
+                style={[
+                  styles.pickupButton, 
+                  selectedPickupForPrompt === 'Processor' && styles.pickupButtonActive
+                ]} 
+                onPress={() => handlePickupPress('Processor')}
               >
                 <Text style={styles.pickupButtonText}>Processor</Text>
               </TouchableOpacity>
               <TouchableOpacity 
-                style={[styles.pickupButton, scores.barge && styles.pickupButtonActive]}
-                onPress={() => setScores(prev => ({ ...prev, barge: !prev.barge }))}
+                style={[
+                  styles.pickupButton, 
+                  selectedPickupForPrompt === 'Barge' && styles.pickupButtonActive
+                ]}
+                onPress={() => handlePickupPress('Barge')}
               >
                 <Text style={styles.pickupButtonText}>Barge</Text>
               </TouchableOpacity>
@@ -255,81 +361,19 @@ export default function AutonScreen() {
             <TouchableOpacity 
               style={[
                 styles.mobilityButton, 
-                scores.mobility && styles.mobilityActive,
-                { backgroundColor: scores.mobility ? Colors[colorScheme].successBackground : Colors[colorScheme].errorBackground }
+                scores.crossedLine.length > 0 && styles.mobilityActive,
+                { backgroundColor: scores.crossedLine.length > 0 ? Colors[colorScheme].successBackground : Colors[colorScheme].errorBackground }
               ]}
-              onPress={() => setScores(prev => ({ ...prev, mobility: !prev.mobility }))}
+              onPress={() => {
+                const newCrossedLine = scores.crossedLine.length > 0 ? [] : [1];
+                updateScoutingData({ crossedLine: newCrossedLine });
+                setScores(prev => ({ ...prev, crossedLine: newCrossedLine }));
+              }}
             >
               <Text style={styles.mobilityText}>
-                Leave Starting Line {scores.mobility ? '✓' : '✗'}
+                {scores.crossedLine.length > 0 ? 'Robot crossed Starting Line ✓' : 'Robot didn\'t cross Starting Line ✗'}
               </Text>
             </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[
-                styles.mobilityButton, 
-                scores.crossedLine && styles.mobilityActive,
-                { backgroundColor: scores.crossedLine ? Colors[colorScheme].successBackground : Colors[colorScheme].errorBackground }
-              ]}
-              onPress={() => setScores(prev => ({ ...prev, crossedLine: !prev.crossedLine }))}
-            >
-              <Text style={styles.mobilityText}>
-                Robot crossed Starting Line {scores.crossedLine ? '✓' : '✗'}
-              </Text>
-            </TouchableOpacity>
-
-            <View style={[styles.locationContainer, { 
-              backgroundColor: Colors[colorScheme].cardBackground,
-              marginHorizontal: 0 
-            }]}>
-              <Text style={styles.locationTitle}>Coral Scored Location</Text>
-              <View style={[styles.locationButtons, { backgroundColor: 'transparent' }]}>
-                <TouchableOpacity 
-                  style={[
-                    styles.locationButton, 
-                    { backgroundColor: scores.coralScoredLocation === 'barge' 
-                      ? Colors[colorScheme].successBackground 
-                      : Colors[colorScheme].inputBackground }
-                  ]}
-                  onPress={() => setScores(prev => ({ ...prev, coralScoredLocation: 'barge' }))}
-                >
-                  <Text style={[
-                    styles.locationText,
-                    { color: scores.coralScoredLocation === 'barge' ? '#fff' : Colors[colorScheme].text }
-                  ]}>Barge Side</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                  style={[
-                    styles.locationButton, 
-                    { backgroundColor: scores.coralScoredLocation === 'processor' 
-                      ? Colors[colorScheme].successBackground 
-                      : Colors[colorScheme].inputBackground }
-                  ]}
-                  onPress={() => setScores(prev => ({ ...prev, coralScoredLocation: 'processor' }))}
-                >
-                  <Text style={[
-                    styles.locationText,
-                    { color: scores.coralScoredLocation === 'processor' ? '#fff' : Colors[colorScheme].text }
-                  ]}>Processor Side</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                  style={[
-                    styles.locationButton, 
-                    { backgroundColor: scores.coralScoredLocation === 'both' 
-                      ? Colors[colorScheme].successBackground 
-                      : Colors[colorScheme].inputBackground }
-                  ]}
-                  onPress={() => setScores(prev => ({ ...prev, coralScoredLocation: 'both' }))}
-                >
-                  <Text style={[
-                    styles.locationText,
-                    { color: scores.coralScoredLocation === 'both' ? '#fff' : Colors[colorScheme].text }
-                  ]}>Both Sides</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
 
             <Button
               onPress={handleNext}
@@ -361,7 +405,7 @@ const styles = StyleSheet.create({
   },
   fieldContainer: {
     width: '100%',
-    aspectRatio: 1.0,
+    aspectRatio: 0.8,
     backgroundColor: '#333',
     marginVertical: 10,
     padding: 10,
@@ -384,16 +428,16 @@ const styles = StyleSheet.create({
     width: 5,
   },
   playerSection: {
-    height: 40,
+    height: 50,
     backgroundColor: '#00F',
     justifyContent: 'center',
     paddingHorizontal: 10,
-    marginBottom: 5,
+    marginBottom: 10,
     borderRadius: 5,
   },
   playerLabel: {
     color: '#FFF',
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
   },
   bottomSection: {
@@ -480,5 +524,65 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     backgroundColor: 'red',
+  },
+  labelButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#444444',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3,
+  },
+  labelButtonSelected: {
+    backgroundColor: '#444444',
+  },
+  labelText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  labelTextSelected: {
+    color: '#00FF00',
+  },
+  promptContainer: {
+    backgroundColor: '#333',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+    alignItems: 'center',
+    elevation: 0,
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+  },
+  promptText: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  promptButtons: {
+    flexDirection: 'row',
+    gap: 20,
+  },
+  promptButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  successButton: {
+    backgroundColor: '#4CAF50',
+  },
+  failureButton: {
+    backgroundColor: '#FF0000',
+  },
+  promptButtonText: {
+    color: '#FFF',
+    fontSize: 24,
+    fontWeight: 'bold',
   },
 } as const); 
