@@ -28,12 +28,33 @@ const HexagonField: React.FC<HexagonFieldProps> = React.memo(({ onLabelPress, se
   // Calculate scales for each hexagon with original spacing
   const hexagonScales = [1.8, 3.0, 4.2, 5.4].map(scale => scale * hexRadius);
 
-  // Calculate positions for each ring with adjusted spacing
+  // Calculate the vertical distance between hexagon borders
+  const getVerticalGap = (scale: number) => scale * Math.sin(Math.PI / 3);
+
+  // Calculate the offset as a percentage of the gap
+  const getButtonOffset = (scale: number) => getVerticalGap(scale) * 0.05; // 5% of the gap
+
+  // Calculate the midpoint between hexagon lines
+  const getMidpoint = (scale1: number, scale2: number) => {
+    const y1 = center - getVerticalGap(scale1);
+    const y2 = center - getVerticalGap(scale2);
+    return (y1 + y2) / 2;
+  };
+
+  // Calculate button sizes and positions to maintain 1px gap
+  const buttonSizes = [
+    hexRadius * 1.0,  // L1 size
+    Math.min(getVerticalGap(hexagonScales[0]) - 2, hexRadius),  // L2 size
+    Math.min(getVerticalGap(hexagonScales[1]) - 2, hexRadius),  // L3 size
+    Math.min(getVerticalGap(hexagonScales[2]) - 2, hexRadius),  // L4 size
+  ];
+
+  // Calculate positions for each ring with buttons between hexagon lines
   const ringPositions = [
-    { scale: centerHexRadius, y: center + 0 },  // Center (L1)
-    { scale: hexagonScales[0], y: center + ((hexagonScales[2] / 4) - 83) },  // L2
-    { scale: hexagonScales[1], y: center + ((hexagonScales[2] / 4) - 112) },  // L3
-    { scale: hexagonScales[2], y: center + ((hexagonScales[2] / 4) - 139) },  // L4
+    { scale: centerHexRadius, y: center },  // Center (L1)
+    { scale: hexagonScales[0], y: getMidpoint(hexagonScales[0], hexagonScales[1]) },  // L2
+    { scale: hexagonScales[1], y: getMidpoint(hexagonScales[1], hexagonScales[2]) },  // L3
+    { scale: hexagonScales[2], y: getMidpoint(hexagonScales[2], hexagonScales[3]) },  // L4
   ];
 
   const handleLabelPress = (labelIndex: number) => {
@@ -77,8 +98,11 @@ const HexagonField: React.FC<HexagonFieldProps> = React.memo(({ onLabelPress, se
             styles.labelButton,
             {
               position: 'absolute',
-              left: center - 12,
-              top: pos.y - 12,
+              left: center - (buttonSizes[i] / 2),
+              top: pos.y - (buttonSizes[i] / 2),
+              width: buttonSizes[i],
+              height: buttonSizes[i],
+              borderRadius: buttonSizes[i] / 2,
               backgroundColor: flashingLabel === i ? '#666666' : '#444444',
             }
           ]}
@@ -86,6 +110,9 @@ const HexagonField: React.FC<HexagonFieldProps> = React.memo(({ onLabelPress, se
         >
           <Text style={[
             styles.labelText,
+            {
+              fontSize: buttonSizes[i] * 0.4,
+            },
             activePromptLabel === i && { color: '#00FF00' }
           ]}>
             {`L${i + 1}`}

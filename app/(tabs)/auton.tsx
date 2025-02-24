@@ -28,12 +28,33 @@ const HexagonField: React.FC<HexagonFieldProps> = React.memo(({ onLabelPress, se
   // Calculate scales for each hexagon with original spacing
   const hexagonScales = [1.8, 3.0, 4.2, 5.4].map(scale => scale * hexRadius);
 
-  // Calculate positions for each ring with proportional spacing
+  // Calculate the vertical distance between hexagon borders
+  const getVerticalGap = (scale: number) => scale * Math.sin(Math.PI / 3);
+
+  // Calculate the offset as a percentage of the gap
+  const getButtonOffset = (scale: number) => getVerticalGap(scale) * 0.05; // 5% of the gap
+
+  // Calculate the midpoint between hexagon lines
+  const getMidpoint = (scale1: number, scale2: number) => {
+    const y1 = center - getVerticalGap(scale1);
+    const y2 = center - getVerticalGap(scale2);
+    return (y1 + y2) / 2;
+  };
+
+  // Calculate button sizes and positions to maintain 1px gap
+  const buttonSizes = [
+    hexRadius * 1.0,  // L1 size (increased from 0.8)
+    Math.min(getVerticalGap(hexagonScales[0]) - 2, hexRadius),  // L2 size
+    Math.min(getVerticalGap(hexagonScales[1]) - 2, hexRadius),  // L3 size
+    Math.min(getVerticalGap(hexagonScales[2]) - 2, hexRadius),  // L4 size
+  ];
+
+  // Calculate positions for each ring with buttons between hexagon lines
   const ringPositions = [
     { scale: centerHexRadius, y: center },  // Center (L1)
-    { scale: hexagonScales[0], y: center - (hexagonScales[0] * 0.65) },  // L2
-    { scale: hexagonScales[1], y: center - (hexagonScales[1] * 0.65) },  // L3
-    { scale: hexagonScales[2], y: center - (hexagonScales[2] * 0.65) },  // L4
+    { scale: hexagonScales[0], y: getMidpoint(hexagonScales[0], hexagonScales[1]) },  // L2
+    { scale: hexagonScales[1], y: getMidpoint(hexagonScales[1], hexagonScales[2]) },  // L3
+    { scale: hexagonScales[2], y: getMidpoint(hexagonScales[2], hexagonScales[3]) },  // L4
   ];
 
   const handleLabelPress = (labelIndex: number) => {
@@ -51,16 +72,16 @@ const HexagonField: React.FC<HexagonFieldProps> = React.memo(({ onLabelPress, se
     const pathData = points.map((point, i) => 
       `${i === 0 ? 'M' : 'L'} ${point.x} ${point.y}`
     ).join(' ') + ' Z';
-
-    return (
-      <Path
+      
+      return (
+        <Path
         key={`hexagon-${hexIndex}`}
         d={pathData}
         fill="none"
-        stroke={hexIndex === 0 ? "#000" : "#666"}
-        strokeWidth={hexIndex === 0 ? "2" : "1"}
-      />
-    );
+          stroke={hexIndex === 0 ? "#000" : "#666"}
+          strokeWidth={hexIndex === 0 ? "2" : "1"}
+        />
+      );
   };
 
   return (
@@ -77,11 +98,11 @@ const HexagonField: React.FC<HexagonFieldProps> = React.memo(({ onLabelPress, se
             styles.labelButton,
             {
               position: 'absolute',
-              left: center - (hexRadius * 0.5),
-              top: pos.y - (hexRadius * 0.5),
-              width: hexRadius,
-              height: hexRadius,
-              borderRadius: hexRadius * 0.5,
+              left: center - (buttonSizes[i] / 2),
+              top: pos.y - (buttonSizes[i] / 2),
+              width: buttonSizes[i],
+              height: buttonSizes[i],
+              borderRadius: buttonSizes[i] / 2,
               backgroundColor: flashingLabel === i ? '#666666' : '#444444',
             }
           ]}
@@ -90,7 +111,7 @@ const HexagonField: React.FC<HexagonFieldProps> = React.memo(({ onLabelPress, se
           <Text style={[
             styles.labelText,
             {
-              fontSize: hexRadius * 0.6,
+              fontSize: buttonSizes[i] * 0.4,
             },
             activePromptLabel === i && { color: '#00FF00' }
           ]}>
@@ -267,8 +288,8 @@ export default function AutonScreen() {
               </View>
               <View style={styles.rightSection} />
             </View>
-          </View>
-
+            </View>
+            
           {(selectedLabelForPrompt !== null || selectedPickupForPrompt !== null) && (
             <View style={[styles.promptContainer]}>
               <Text style={{ color: '#FFF', fontSize: 18, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' }}>
@@ -375,11 +396,11 @@ export default function AutonScreen() {
               </Text>
             </TouchableOpacity>
 
-            <Button
-              onPress={handleNext}
-              style={styles.button}
-              text="Next"
-            />
+          <Button
+            onPress={handleNext}
+            style={styles.button}
+            text="Next"
+          />
           </View>
         </View>
       </ScrollView>

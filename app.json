@@ -19,7 +19,9 @@
       "package": "com.firstscouting.scoutingpass",
       "enableProguardInReleaseBuilds": true,
       "enableSeparateBuildPerCPUArchitecture": true,
-      "enableHermes": true
+      "enableHermes": true,
+      "permissions": [],
+      "versionCode": 1
     },
     "web": {
       "bundler": "metro",
@@ -48,6 +50,12 @@
       "eas": {
         "projectId": "56c6ab98-fcb8-425b-baed-c2ff4b989ad7"
       }
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/56c6ab98-fcb8-425b-baed-c2ff4b989ad7"
     }
   }
 }

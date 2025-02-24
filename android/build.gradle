@@ -2,14 +2,14 @@
 
 buildscript {
     ext {
-        buildToolsVersion = findProperty('android.buildToolsVersion') ?: '35.0.0'
-        minSdkVersion = Integer.parseInt(findProperty('android.minSdkVersion') ?: '24')
-        compileSdkVersion = Integer.parseInt(findProperty('android.compileSdkVersion') ?: '35')
-        targetSdkVersion = Integer.parseInt(findProperty('android.targetSdkVersion') ?: '34')
-        kotlinVersion = '1.8.22'  // Downgraded to a version known to work with Compose
-        composeCompilerVersion = '1.4.8'  // Matching version for Kotlin 1.8.22
-
+        buildToolsVersion = "33.0.0"
+        minSdkVersion = 24
+        compileSdkVersion = 33
+        targetSdkVersion = 33
+        kotlinVersion = '1.8.22'
+        composeCompilerVersion = '1.4.8'
         ndkVersion = "26.1.10909125"
+        frescoVersion = "2.5.0"
     }
     repositories {
         google()
@@ -41,30 +41,26 @@ allprojects {
     }
 }
 
-// Force all subprojects to use the same Kotlin version
-subprojects {
-    afterEvaluate { project ->
-        if (project.hasProperty('android')) {
-            android {
-                kotlinOptions {
-                    jvmTarget = "1.8"
-                }
-                if (project.hasProperty('composeOptions')) {
-                    composeOptions {
-                        kotlinCompilerExtensionVersion = composeCompilerVersion
-                    }
-                }
-            }
-        }
-    }
-}
+// Force all projects to use the same Kotlin version
+subprojects { project ->
+    project.plugins.withType(com.android.build.gradle.BasePlugin).configureEach {
+        android {
+            buildToolsVersion rootProject.ext.buildToolsVersion
+            compileSdkVersion rootProject.ext.compileSdkVersion
 
-// Force all subprojects to use the same Kotlin version
-allprojects {
-    configurations.all {
-        resolutionStrategy.eachDependency { DependencyResolveDetails details ->
-            if (details.requested.group == 'org.jetbrains.kotlin') {
-                details.useVersion kotlinVersion
+            defaultConfig {
+                minSdkVersion rootProject.ext.minSdkVersion
+                targetSdkVersion rootProject.ext.targetSdkVersion
+            }
+
+            kotlinOptions {
+                jvmTarget = "1.8"
+            }
+
+            if (project.hasProperty('composeOptions')) {
+                composeOptions {
+                    kotlinCompilerExtensionVersion rootProject.ext.composeCompilerVersion
+                }
             }
         }
     }
