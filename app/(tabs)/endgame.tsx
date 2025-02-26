@@ -51,10 +51,43 @@ const RadioButton: React.FC<RadioButtonProps> = ({ label, selected, onSelect, po
   </TouchableOpacity>
 );
 
+interface RatingProps {
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+  max: number;
+}
+
+const Rating: React.FC<RatingProps> = ({ label, value, onChange, max }) => (
+  <RNView style={styles.ratingContainer}>
+    <Text style={styles.ratingLabel}>{label}</Text>
+    <RNView style={styles.ratingButtons}>
+      {Array.from({ length: max }, (_, i) => i + 1).map((num) => (
+        <TouchableOpacity
+          key={num}
+          style={[
+            styles.ratingButton,
+            value === num && styles.ratingButtonActive,
+            { borderRightWidth: num < max ? 1 : 0 }
+          ]}
+          onPress={() => onChange(num)}
+        >
+          <Text style={[styles.ratingButtonText, value === num && styles.ratingButtonTextActive]}>
+            {num}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </RNView>
+  </RNView>
+);
+
 interface EndgameState {
   deepClimbStatus: 'not_attempted' | 'failed' | 'successful';
   shallowClimbStatus: 'not_attempted' | 'failed' | 'successful';
   parkedStatus: 'not_attempted' | 'failed' | 'successful';
+  driverSkill: number;
+  defenseRating: number;
+  speedRating: number;
   comments: string;
   redAllianceScore: string;
   blueAllianceScore: string;
@@ -69,9 +102,12 @@ export default function EndgameScreen() {
   const { scoutingData, updateScoutingData } = useScoutingData();
 
   const [endgameState, setEndgameState] = useState<EndgameState>({
-    deepClimbStatus: scoutingData.driverSkill,
-    shallowClimbStatus: scoutingData.speedRating,
-    parkedStatus: scoutingData.parked,
+    deepClimbStatus: 'not_attempted',
+    shallowClimbStatus: 'not_attempted',
+    parkedStatus: 'not_attempted',
+    driverSkill: scoutingData.driverSkill,
+    defenseRating: scoutingData.defenseRating,
+    speedRating: scoutingData.speedRating,
     comments: scoutingData.comments || '',
     redAllianceScore: scoutingData.redAllianceScore || '',
     blueAllianceScore: scoutingData.blueAllianceScore || '',
@@ -79,9 +115,12 @@ export default function EndgameScreen() {
 
   useEffect(() => {
     setEndgameState({
-      deepClimbStatus: scoutingData.driverSkill,
-      shallowClimbStatus: scoutingData.speedRating,
-      parkedStatus: scoutingData.parked,
+      deepClimbStatus: 'not_attempted',
+      shallowClimbStatus: 'not_attempted',
+      parkedStatus: 'not_attempted',
+      driverSkill: scoutingData.driverSkill,
+      defenseRating: scoutingData.defenseRating,
+      speedRating: scoutingData.speedRating,
       comments: scoutingData.comments || '',
       redAllianceScore: scoutingData.redAllianceScore || '',
       blueAllianceScore: scoutingData.blueAllianceScore || '',
@@ -93,19 +132,13 @@ export default function EndgameScreen() {
       ...prev,
       [key]: status
     }));
+  };
 
-    // Immediately update scoutingData based on which status was changed
-    switch(key) {
-      case 'deepClimbStatus':
-        updateScoutingData({ driverSkill: status });
-        break;
-      case 'shallowClimbStatus':
-        updateScoutingData({ speedRating: status });
-        break;
-      case 'parkedStatus':
-        updateScoutingData({ parked: status });
-        break;
-    }
+  const setRating = (key: keyof typeof endgameState, value: number) => {
+    setEndgameState(prev => ({
+      ...prev,
+      [key]: value
+    }));
   };
 
   const handleNext = () => {
@@ -114,9 +147,10 @@ export default function EndgameScreen() {
       spotlit: false,
       harmony: false,
       trap: false,
-      parked: endgameState.parkedStatus,
-      driverSkill: endgameState.deepClimbStatus,
-      speedRating: endgameState.shallowClimbStatus,
+      parked: endgameState.parkedStatus === 'successful',
+      driverSkill: endgameState.driverSkill,
+      defenseRating: endgameState.defenseRating,
+      speedRating: endgameState.speedRating,
       comments: endgameState.comments,
       redAllianceScore: endgameState.redAllianceScore,
       blueAllianceScore: endgameState.blueAllianceScore,
@@ -209,6 +243,28 @@ export default function EndgameScreen() {
           </View>
 
           <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Performance Ratings</Text>
+            <Rating
+              label="Driver Skill"
+              value={endgameState.driverSkill}
+              onChange={(value) => setRating('driverSkill', value)}
+              max={5}
+            />
+            <Rating
+              label="Defense Rating"
+              value={endgameState.defenseRating}
+              onChange={(value) => setRating('defenseRating', value)}
+              max={5}
+            />
+            <Rating
+              label="Speed Rating"
+              value={endgameState.speedRating}
+              onChange={(value) => setRating('speedRating', value)}
+              max={5}
+            />
+          </View>
+
+          <View style={styles.section}>
             <Text style={styles.sectionTitle}>Comments</Text>
             <RNView style={styles.commentContainer}>
               <TextInput
@@ -217,7 +273,6 @@ export default function EndgameScreen() {
                 onChangeText={(text) => {
                   if (text.length <= 60) {
                     setEndgameState(prev => ({ ...prev, comments: text }));
-                    updateScoutingData({ comments: text });
                   }
                 }}
                 placeholder="Add comments (60 char max)"
@@ -252,10 +307,7 @@ export default function EndgameScreen() {
                     }
                   ]}
                   value={endgameState.redAllianceScore}
-                  onChangeText={(value) => {
-                    setEndgameState(prev => ({ ...prev, redAllianceScore: value }));
-                    updateScoutingData({ redAllianceScore: value });
-                  }}
+                  onChangeText={(value) => setEndgameState(prev => ({ ...prev, redAllianceScore: value }))}
                   keyboardType="numeric"
                   placeholder="Enter score"
                   placeholderTextColor={colorScheme === 'light' ? '#999' : '#666'}
@@ -276,10 +328,7 @@ export default function EndgameScreen() {
                     }
                   ]}
                   value={endgameState.blueAllianceScore}
-                  onChangeText={(value) => {
-                    setEndgameState(prev => ({ ...prev, blueAllianceScore: value }));
-                    updateScoutingData({ blueAllianceScore: value });
-                  }}
+                  onChangeText={(value) => setEndgameState(prev => ({ ...prev, blueAllianceScore: value }))}
                   keyboardType="numeric"
                   placeholder="Enter score"
                   placeholderTextColor={colorScheme === 'light' ? '#999' : '#666'}
