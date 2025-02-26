@@ -6,20 +6,20 @@ export const config_data = `
   "checkboxAs": "10",
   "prematch": [
     { "name": "Scouter Initials",
-      "code": "s",
+      "code": "scouter_name",
       "type": "scouter",
       "size": 5,
       "maxSize": 5,
       "required": "true"
     },
     { "name": "Event",
-      "code": "e",
+      "code": "event",
       "type": "event",
       "defaultValue": "2025ilpe",
       "required": "true"
     },
     { "name": "Match Level",
-      "code": "l",
+      "code": "level",
       "type": "level",
       "choices": {
         "qm": "Quals<br>",
@@ -30,14 +30,14 @@ export const config_data = `
       "required": "true"
     },
     { "name": "Match #",
-      "code": "m",
+      "code": "match_num",
       "type": "match",
       "min": 1,
       "max": 150,
       "required": "true"
     },
     { "name": "Robot",
-      "code": "r",
+      "code": "robot",
       "type": "robot",
       "choices": {
         "r1": "Red-1",
@@ -50,13 +50,13 @@ export const config_data = `
       "required":"true"
     },
     { "name": "Team #",
-      "code": "t",
+      "code": "team_num",
       "type": "team",
       "min": 1,
       "max": 99999
     },
     { "name": "Auto Start Position",
-      "code": "as",
+      "code": "start_pos",
       "type": "clickable_image",
       "filename": "2025/field_image.png",
       "clickRestriction": "one",
@@ -66,11 +66,11 @@ export const config_data = `
   ],
   "auton": [
     { "name": "Leave Starting Line",
-      "code": "al",
+      "code": "starting_line",
       "type": "bool"
     },
     { "name": "Scoring Positions",
-      "code": "asp",
+      "code": "scoring_pos",
       "type": "clickable_image",
       "filename": "2025/field_image.png",
       "clickRestriction": "none",

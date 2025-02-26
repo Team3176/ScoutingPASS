@@ -1,22 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
-import { Text } from '../../components/Themed';
+import { StyleSheet, TouchableOpacity, Image, Dimensions, View as RNView, useColorScheme } from 'react-native';
+import { Text, View } from '../../components/Themed';
 import { ScrollView } from 'react-native-gesture-handler';
 import { useRouter } from 'expo-router';
 import { Button } from '../../components/ui/Button';
-import { FontAwesome } from '@expo/vector-icons';
+import Colors from '../../constants/Colors';
 import { config_data } from './2025/reefscape_config.js';
 import { useScoutingData } from '../../context/ScoutingContext';
-import { useColorScheme } from 'react-native';
+import Svg, { Path, Circle, Text as SvgText, G } from 'react-native-svg';
 
-interface CounterProps {
-  label: string;
-  value: number;
-  onIncrement: () => void;
-  onDecrement: () => void;
+interface HexagonFieldProps {
+  onLabelPress: (labelIndex: number) => void;
+  selectedLabels: Set<number>;
+  activePromptLabel: number | null;
 }
 
-<<<<<<< HEAD
 const HexagonField: React.FC<HexagonFieldProps> = React.memo(({ onLabelPress, selectedLabels, activePromptLabel }) => {
   const size = Dimensions.get('window').width - 40;
   const center = size / 2;
@@ -121,178 +119,103 @@ const HexagonField: React.FC<HexagonFieldProps> = React.memo(({ onLabelPress, se
           </Text>
         </TouchableOpacity>
       ))}
-=======
-const Counter: React.FC<CounterProps> = ({ label, value, onIncrement, onDecrement }) => (
-  <View style={styles.counterContainer}>
-    <Text style={styles.label}>{label}</Text>
-    <View style={styles.counterControls}>
-      <TouchableOpacity onPress={onDecrement} style={styles.counterButton}>
-        <FontAwesome name="minus" size={20} color="#fff" />
-      </TouchableOpacity>
-      <Text style={styles.counterValue}>{value}</Text>
-      <TouchableOpacity onPress={onIncrement} style={styles.counterButton}>
-        <FontAwesome name="plus" size={20} color="#fff" />
-      </TouchableOpacity>
->>>>>>> parent of c58d7c3 (Mostly fixed)
     </View>
-  </View>
-);
-
-interface CycleTimerProps {
-  label: string;
-  isRunning: boolean;
-  onToggle: () => void;
-  cycles: number[];
-  onUndo: () => void;
-}
-
-const CycleTimer: React.FC<CycleTimerProps> = ({ label, isRunning, onToggle, cycles, onUndo }) => (
-  <View style={styles.timerContainer}>
-    <Text style={styles.label}>{label}</Text>
-    <View style={styles.timerControls}>
-      <TouchableOpacity 
-        onPress={onToggle} 
-        style={[styles.timerButton, isRunning && styles.timerButtonActive]}
-      >
-        <Text style={styles.timerButtonText}>
-          {isRunning ? 'Stop Cycle' : 'Start Cycle'}
-        </Text>
-      </TouchableOpacity>
-      {cycles.length > 0 && (
-        <TouchableOpacity onPress={onUndo} style={styles.undoButton}>
-          <FontAwesome name="undo" size={20} color="#fff" />
-        </TouchableOpacity>
-      )}
-    </View>
-    {cycles.length > 0 && (
-      <View style={styles.cycleStats}>
-        <Text>Cycles: {cycles.length}</Text>
-        <Text>Avg Time: {(cycles.reduce((a, b) => a + b, 0) / cycles.length).toFixed(1)}s</Text>
-      </View>
-    )}
-  </View>
-);
+  );
+});
 
 export default function TeleopScreen() {
   const router = useRouter();
   const configJson = JSON.parse(config_data);
-  const teleopConfig = configJson.teleop;
   const { scoutingData, updateScoutingData } = useScoutingData();
-  const colorScheme = useColorScheme();
+  const colorScheme = useColorScheme() ?? 'light';
 
   const [scores, setScores] = useState({
-    notePickup: scoutingData.teleopNotePickup,
-    algaeProcessor: scoutingData.teleopAlgaeProcessor,
-    algaeNet: scoutingData.teleopAlgaeNet,
-    scoredFarSide: scoutingData.scoredFarSide || false,
-    algaeRemoved: scoutingData.algaeRemoved || false,
-    robotDied: scoutingData.robotDied || false,
-    cageHang: scoutingData.cageHang || null,
+    floorPickup: false,
+    humanFeed: false,
+    processor: false,
+    barge: false,
+    penalties: 0,
+    playedDefense: false,
+    robotDied: false,
   });
 
-  const [cycleTimer, setCycleTimer] = useState({
-    isRunning: false,
-    startTime: 0,
-    cycles: scoutingData.scoringCycles,
-  });
+  const [selectedLabels, setSelectedLabels] = useState<Set<number>>(new Set());
+  const [selectedLabelForPrompt, setSelectedLabelForPrompt] = useState<number | null>(null);
+  const [selectedPickupForPrompt, setSelectedPickupForPrompt] = useState<string | null>(null);
 
-  // Update local state when context changes (e.g. when form is cleared)
-  useEffect(() => {
-    setScores({
-      notePickup: scoutingData.teleopNotePickup,
-      algaeProcessor: scoutingData.teleopAlgaeProcessor,
-      algaeNet: scoutingData.teleopAlgaeNet,
-      scoredFarSide: scoutingData.scoredFarSide || false,
-      algaeRemoved: scoutingData.algaeRemoved || false,
-      robotDied: scoutingData.robotDied || false,
-      cageHang: scoutingData.cageHang || null,
-    });
-    setCycleTimer(prev => ({
-      ...prev,
-      cycles: scoutingData.scoringCycles,
-    }));
-  }, [scoutingData]);
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (cycleTimer.isRunning) {
-      interval = setInterval(() => {
-        // Update timer display if needed
-      }, 100);
-    }
-    return () => clearInterval(interval);
-  }, [cycleTimer.isRunning]);
-
-  const handleIncrement = (key: keyof typeof scores) => {
-    if (typeof scores[key] === 'number') {
-      setScores(prev => ({
-        ...prev,
-        [key]: (prev[key] as number) + 1
-      }));
-    }
+  const handleLabelPress = (labelIndex: number) => {
+    setSelectedLabelForPrompt(labelIndex);
+    setSelectedPickupForPrompt(null);
   };
 
-  const handleDecrement = (key: keyof typeof scores) => {
-    if (typeof scores[key] === 'number' && scores[key] as number > 0) {
-      setScores(prev => ({
-        ...prev,
-        [key]: (prev[key] as number) - 1
-      }));
-    }
+  const handlePickupPress = (pickupType: string) => {
+    setSelectedPickupForPrompt(pickupType);
+    setSelectedLabelForPrompt(null);
   };
 
-  const toggleCycleTimer = () => {
-    if (cycleTimer.isRunning) {
-      const cycleTime = (Date.now() - cycleTimer.startTime) / 1000;
-      setCycleTimer(prev => ({
-        isRunning: false,
-        startTime: 0,
-        cycles: [...prev.cycles, cycleTime],
-      }));
-    } else {
-      setCycleTimer(prev => ({
-        ...prev,
-        isRunning: true,
-        startTime: Date.now(),
-      }));
-    }
-  };
+  const handlePromptResponse = (response: 'success' | 'failure') => {
+    if (selectedLabelForPrompt !== null) {
+      // Update the corresponding teleopCoralL array
+      const value = response === 'success' ? 1 : 0;
+      const fieldName = `teleopCoralL${selectedLabelForPrompt + 1}` as keyof typeof scoutingData;
+      updateScoutingData({
+        ...scoutingData,
+        [fieldName]: [...(scoutingData[fieldName] as number[] || []), value]
+      });
 
-  const undoCycle = () => {
-    setCycleTimer(prev => ({
-      ...prev,
-      cycles: prev.cycles.slice(0, -1),
-    }));
+      if (response === 'success') {
+        setSelectedLabels(prev => {
+          const newSet = new Set(prev);
+          newSet.add(selectedLabelForPrompt);
+          return newSet;
+        });
+      } else {
+        setSelectedLabels(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(selectedLabelForPrompt);
+          return newSet;
+        });
+      }
+      setSelectedLabelForPrompt(null);
+    } else if (selectedPickupForPrompt !== null) {
+      // Update the corresponding pickup array
+      const value = response === 'success' ? 1 : 0;
+      let fieldName: keyof typeof scoutingData;
+      
+      switch (selectedPickupForPrompt) {
+        case 'Floor Pickup':
+          fieldName = 'teleopProcessorScore';
+          break;
+        case 'Human Feed':
+          fieldName = 'teleopNetScore';
+          break;
+        case 'Processor':
+          fieldName = 'teleopAlgaeProcessor';
+          break;
+        case 'Barge':
+          fieldName = 'teleopAlgaeNet';
+          break;
+        default:
+          return;
+      }
+
+      updateScoutingData({
+        ...scoutingData,
+        [fieldName]: [...(scoutingData[fieldName] as number[] || []), value]
+      });
+      
+      setSelectedPickupForPrompt(null);
+    }
   };
 
   const handleNext = () => {
+    // Save the current scores to scouting data before navigating
     updateScoutingData({
-      teleopNotePickup: scores.notePickup,
-      teleopAlgaeProcessor: scores.algaeProcessor,
-      teleopAlgaeNet: scores.algaeNet,
-      scoringCycles: cycleTimer.cycles,
-      scoredFarSide: scores.scoredFarSide,
-      algaeRemoved: scores.algaeRemoved,
       robotDied: scores.robotDied,
-      cageHang: scores.cageHang,
+      defenseRating: scores.penalties
     });
     router.push('/endgame');
   };
-
-  const toggleCheckbox = (key: 'scoredFarSide' | 'algaeRemoved' | 'robotDied') => {
-    setScores(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
-  };
-
-  // Find specific configurations
-  const coralL1Config = teleopConfig.find((field: any) => field.code === 'tc1');
-  const coralL2Config = teleopConfig.find((field: any) => field.code === 'tc2');
-  const coralL3Config = teleopConfig.find((field: any) => field.code === 'tc3');
-  const coralL4Config = teleopConfig.find((field: any) => field.code === 'tc4');
-  const processorScoreConfig = teleopConfig.find((field: any) => field.code === 'tps');
-  const netScoreConfig = teleopConfig.find((field: any) => field.code === 'tns');
 
   return (
     <View style={[
@@ -306,110 +229,180 @@ export default function TeleopScreen() {
         ]}>{configJson.page_title} - Teleop</Text>
         
         <View style={styles.content}>
-          <View style={styles.counterRow}>
-            <View style={styles.counterWrapper}>
-              <Counter
-                label="Note Pickup"
-                value={scores.notePickup}
-                onIncrement={() => handleIncrement('notePickup')}
-                onDecrement={() => handleDecrement('notePickup')}
-              />
+          <View style={styles.fieldContainer}>
+            <View style={styles.playerSection}>
+              <Text style={styles.playerLabel}>Teleop Scoring</Text>
+            </View>
+            
+            <View style={styles.fieldContent}>
+              <View style={styles.leftSection} />
+              <View style={styles.centerSection}>
+                <HexagonField 
+                  onLabelPress={handleLabelPress}
+                  selectedLabels={selectedLabels}
+                  activePromptLabel={selectedLabelForPrompt}
+                />
+              </View>
+              <View style={styles.rightSection} />
             </View>
           </View>
 
-          <View style={styles.counterRow}>
-            <View style={styles.counterWrapper}>
-              <Counter
-                label="Algae scored in Processor"
-                value={scores.algaeProcessor}
-                onIncrement={() => handleIncrement('algaeProcessor')}
-                onDecrement={() => handleDecrement('algaeProcessor')}
-              />
+          {(selectedLabelForPrompt !== null || selectedPickupForPrompt !== null) && (
+            <View style={[styles.promptContainer]}>
+              <Text style={{ color: '#FFF', fontSize: 18, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' }}>
+                {selectedLabelForPrompt !== null ? `L${selectedLabelForPrompt + 1}` : selectedPickupForPrompt} Score:
+              </Text>
+              <View style={{ flexDirection: 'row', gap: 20, backgroundColor: 'transparent' }}>
+                <TouchableOpacity 
+                  style={{
+                    width: 50,
+                    height: 50,
+                    borderRadius: 25,
+                    backgroundColor: '#4CAF50',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    elevation: 0,
+                    shadowColor: 'transparent',
+                    shadowOffset: { width: 0, height: 0 },
+                    shadowOpacity: 0,
+                    shadowRadius: 0,
+                  }}
+                  onPress={() => handlePromptResponse('success')}
+                >
+                  <Text style={{ color: '#FFF', fontSize: 24, fontWeight: 'bold' }}>✓</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={{
+                    width: 50,
+                    height: 50,
+                    borderRadius: 25,
+                    backgroundColor: '#FF0000',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    elevation: 0,
+                    shadowColor: 'transparent',
+                    shadowOffset: { width: 0, height: 0 },
+                    shadowOpacity: 0,
+                    shadowRadius: 0,
+                  }}
+                  onPress={() => handlePromptResponse('failure')}
+                >
+                  <Text style={{ color: '#FFF', fontSize: 24, fontWeight: 'bold' }}>✗</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-            <View style={styles.counterWrapper}>
-              <Counter
-                label="Algae scored in Net"
-                value={scores.algaeNet}
-                onIncrement={() => handleIncrement('algaeNet')}
-                onDecrement={() => handleDecrement('algaeNet')}
-              />
-            </View>
-          </View>
+          )}
 
-          <View style={styles.checkboxContainer}>
+          <View style={styles.buttonsContainer}>
+            <View style={styles.buttonRow}>
+              <TouchableOpacity 
+                style={[
+                  styles.pickupButton, 
+                  selectedPickupForPrompt === 'Floor Pickup' && styles.pickupButtonActive
+                ]} 
+                onPress={() => handlePickupPress('Floor Pickup')}
+              >
+                <Text style={styles.pickupButtonText}>Floor Pickup</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[
+                  styles.pickupButton, 
+                  selectedPickupForPrompt === 'Human Feed' && styles.pickupButtonActive
+                ]}
+                onPress={() => handlePickupPress('Human Feed')}
+              >
+                <Text style={styles.pickupButtonText}>Human Feed</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.buttonRow}>
+              <TouchableOpacity 
+                style={[
+                  styles.pickupButton, 
+                  selectedPickupForPrompt === 'Processor' && styles.pickupButtonActive
+                ]} 
+                onPress={() => handlePickupPress('Processor')}
+              >
+                <Text style={styles.pickupButtonText}>Processor</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[
+                  styles.pickupButton, 
+                  selectedPickupForPrompt === 'Barge' && styles.pickupButtonActive
+                ]}
+                onPress={() => handlePickupPress('Barge')}
+              >
+                <Text style={styles.pickupButtonText}>Barge</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.penaltyContainer}>
+              <Text style={styles.penaltyLabel}>Robot Penalties</Text>
+              <View style={styles.penaltyControls}>
+                <TouchableOpacity 
+                  style={styles.penaltyButton}
+                  onPress={() => {
+                    setScores(prev => {
+                      const newPenalties = Math.max(0, prev.penalties - 1);
+                      updateScoutingData({ defenseRating: newPenalties });
+                      return { ...prev, penalties: newPenalties };
+                    });
+                  }}
+                >
+                  <Text style={styles.penaltyButtonText}>-</Text>
+                </TouchableOpacity>
+                <Text style={styles.penaltyCount}>{scores.penalties}</Text>
+                <TouchableOpacity 
+                  style={styles.penaltyButton}
+                  onPress={() => {
+                    setScores(prev => {
+                      const newPenalties = prev.penalties + 1;
+                      updateScoutingData({ defenseRating: newPenalties });
+                      return { ...prev, penalties: newPenalties };
+                    });
+                  }}
+                >
+                  <Text style={styles.penaltyButtonText}>+</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
             <TouchableOpacity 
-              style={[styles.checkbox, scores.scoredFarSide && styles.checkboxActive]}
-              onPress={() => toggleCheckbox('scoredFarSide')}
+              style={[styles.checkBox, scores.playedDefense && styles.checkBoxActive]}
+              onPress={() => {
+                setScores(prev => {
+                  const newPlayedDefense = !prev.playedDefense;
+                  updateScoutingData({ robotDied: prev.robotDied, playedDefense: newPlayedDefense });
+                  return { ...prev, playedDefense: newPlayedDefense };
+                });
+              }}
             >
-              <Text style={styles.checkboxText}>
-                Scored on far side of Reef? {scores.scoredFarSide ? '✓' : '✗'}
+              <Text style={styles.checkBoxText}>
+                {scores.playedDefense ? 'Robot played defense ✓' : 'Robot didn\'t play defense ✗'}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
-              style={[styles.checkbox, scores.algaeRemoved && styles.checkboxActive]}
-              onPress={() => toggleCheckbox('algaeRemoved')}
+              style={[styles.checkBox, scores.robotDied && styles.checkBoxActive]}
+              onPress={() => {
+                setScores(prev => {
+                  const newRobotDied = !prev.robotDied;
+                  updateScoutingData({ robotDied: newRobotDied, playedDefense: prev.playedDefense });
+                  return { ...prev, robotDied: newRobotDied };
+                });
+              }}
             >
-              <Text style={styles.checkboxText}>
-                Algae Removed? {scores.algaeRemoved ? '✓' : '✗'}
+              <Text style={styles.checkBoxText}>
+                {scores.robotDied ? 'Robot died/e-stopped ✓' : 'Robot did not die/e-stop ✗'}
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
-              style={[styles.checkbox, scores.robotDied && styles.checkboxActive]}
-              onPress={() => toggleCheckbox('robotDied')}
-            >
-              <Text style={styles.checkboxText}>
-                Robot Died? {scores.robotDied ? '✓' : '✗'}
-              </Text>
-            </TouchableOpacity>
+            <Button
+              onPress={handleNext}
+              style={styles.button}
+              text="Next"
+            />
           </View>
-
-          <View style={styles.dropdownContainer}>
-            <Text style={styles.dropdownTitle}>Cage Hang</Text>
-            <View style={styles.dropdownButtons}>
-              <TouchableOpacity 
-                style={[styles.dropdownButton, scores.cageHang === 'deep' && styles.dropdownActive]}
-                onPress={() => setScores(prev => ({ ...prev, cageHang: 'deep' }))}
-              >
-                <Text style={[styles.dropdownText, scores.cageHang === 'deep' && styles.dropdownTextActive]}>
-                  Deep Cage
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={[styles.dropdownButton, scores.cageHang === 'shallow' && styles.dropdownActive]}
-                onPress={() => setScores(prev => ({ ...prev, cageHang: 'shallow' }))}
-              >
-                <Text style={[styles.dropdownText, scores.cageHang === 'shallow' && styles.dropdownTextActive]}>
-                  Shallow Cage
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={[styles.dropdownButton, scores.cageHang === 'line' && styles.dropdownActive]}
-                onPress={() => setScores(prev => ({ ...prev, cageHang: 'line' }))}
-              >
-                <Text style={[styles.dropdownText, scores.cageHang === 'line' && styles.dropdownTextActive]}>
-                  Line Park
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <CycleTimer
-            label="Scoring Cycle"
-            isRunning={cycleTimer.isRunning}
-            onToggle={toggleCycleTimer}
-            cycles={cycleTimer.cycles}
-            onUndo={undoCycle}
-          />
-
-          <Button
-            onPress={handleNext}
-            style={styles.button}
-            text="Next"
-          />
         </View>
       </ScrollView>
     </View>
@@ -419,7 +412,7 @@ export default function TeleopScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    padding: 10,
   },
   title: {
     fontSize: 24,
@@ -428,135 +421,163 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   content: {
-    gap: 10,
-    paddingBottom: 100,
+    gap: 15,
+    paddingBottom: 40,
+    backgroundColor: 'transparent',
   },
-  counterRow: {
+  fieldContainer: {
+    width: '100%',
+    aspectRatio: 0.8,
+    backgroundColor: '#333',
+    marginVertical: 10,
+    padding: 10,
+    borderRadius: 10,
+  },
+  fieldContent: {
+    flex: 1,
+    flexDirection: 'row',
+    marginVertical: 5,
+  },
+  leftSection: {
+    width: 5,
+  },
+  centerSection: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  rightSection: {
+    width: 5,
+  },
+  playerSection: {
+    height: 50,
+    backgroundColor: '#00F',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    marginBottom: 10,
+    borderRadius: 5,
+  },
+  playerLabel: {
+    color: '#FFF',
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  button: {
+    marginTop: 15,
+  },
+  pickupButton: {
+    flex: 1,
+    padding: 15,
+    borderRadius: 8,
+    backgroundColor: '#333',
+    alignItems: 'center',
+  },
+  pickupButtonActive: {
+    backgroundColor: '#00F',
+  },
+  pickupButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  buttonsContainer: {
+    marginTop: 10,
+    gap: 10,
+  },
+  buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 10,
   },
-  counterWrapper: {
-    flex: 1,
-  },
-  counterContainer: {
-    backgroundColor: '#AF8D8D',
-    padding: 10,
-    borderRadius: 10,
-  },
-  label: {
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  counterControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  labelButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#444444',
     justifyContent: 'center',
-    gap: 10,
-  },
-  counterButton: {
-    backgroundColor: '#2196F3',
-    width: 35,
-    height: 35,
-    borderRadius: 17.5,
     alignItems: 'center',
-    justifyContent: 'center',
+    elevation: 3,
   },
-  counterValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    minWidth: 35,
-    textAlign: 'center',
-    color: '#F8F8F9',
-  },
-  timerContainer: {
-    backgroundColor: '#25A26C',
-    padding: 15,
-    borderRadius: 10,
-  },
-  timerControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 20,
-  },
-  timerButton: {
-    backgroundColor: '#2196F3',
-    padding: 10,
-    borderRadius: 5,
-    minWidth: 120,
-    alignItems: 'center',
-  },
-  timerButtonActive: {
-    backgroundColor: '#f44336',
-  },
-  timerButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  undoButton: {
-    backgroundColor: '#757575',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cycleStats: {
-    marginTop: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  button: {
-    marginTop: 20,
-  },
-  checkboxContainer: {
-    gap: 10,
-  },
-  checkbox: {
-    backgroundColor: '#FF0D0D',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  checkboxActive: {
-    backgroundColor: '#4CAF50',
-  },
-  checkboxText: {
+  labelText: {
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#000000',
   },
-  dropdownContainer: {
-    backgroundColor: '#413838',
+  promptContainer: {
+    backgroundColor: '#333',
     padding: 15,
     borderRadius: 10,
-  },
-  dropdownTitle: {
-    fontSize: 16,
     marginBottom: 10,
-    color: '#FEFEFE',
+    alignItems: 'center',
+    elevation: 0,
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+  },
+  penaltyContainer: {
+    backgroundColor: '#333',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+    elevation: 0,
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+  },
+  penaltyLabel: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  penaltyControls: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 20,
+    backgroundColor: 'transparent',
+  },
+  penaltyButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#2196F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 0,
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+  },
+  penaltyButtonText: {
+    color: '#FFF',
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  penaltyCount: {
+    color: '#FFF',
+    fontSize: 24,
+    fontWeight: 'bold',
+    minWidth: 40,
     textAlign: 'center',
   },
-  dropdownButtons: {
-    flexDirection: 'column',
-    gap: 8,
-  },
-  dropdownButton: {
-    backgroundColor: '#2F2F2F',
-    padding: 12,
+  checkBox: {
+    backgroundColor: '#FF0000',
+    padding: 15,
     borderRadius: 8,
     alignItems: 'center',
+    marginBottom: 10,
   },
-  dropdownActive: {
-    backgroundColor: '#2196F3',
+  checkBoxActive: {
+    backgroundColor: '#4CAF50',
   },
-  dropdownText: {
-    fontSize: 14,
+  checkBoxText: {
+    color: '#FFF',
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#FEFEFE',
-  },
-  dropdownTextActive: {
-    color: '#FFFFFF',
   },
 }); 
