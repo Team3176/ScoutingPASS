@@ -128,13 +128,24 @@ export const ScoutingContext = createContext<ScoutingContextType>({
 
 export function ScoutingProvider({ children }: { children: React.ReactNode }) {
   const [scoutingData, setScoutingData] = useState<ScoutingData>(defaultScoutingData);
+  const [error, setError] = useState<Error | null>(null);
 
   const updateScoutingData = (updates: Partial<ScoutingData>) => {
-    setScoutingData(prev => ({
-      ...prev,
-      ...updates,
-    }));
+    try {
+      setScoutingData(prev => ({
+        ...prev,
+        ...updates,
+      }));
+    } catch (err) {
+      console.error('Error updating scouting data:', err);
+      setError(err instanceof Error ? err : new Error(String(err)));
+    }
   };
+
+  // If there was an error, render children anyway but log the error
+  if (error) {
+    console.error('ScoutingProvider error:', error);
+  }
 
   return (
     <ScoutingContext.Provider value={{ scoutingData, setScoutingData, updateScoutingData }}>
@@ -146,7 +157,13 @@ export function ScoutingProvider({ children }: { children: React.ReactNode }) {
 export function useScoutingData() {
   const context = useContext(ScoutingContext);
   if (context === undefined) {
-    throw new Error('useScoutingData must be used within a ScoutingProvider');
+    console.error('useScoutingData must be used within a ScoutingProvider');
+    // Return a default context instead of throwing to prevent crashes
+    return {
+      scoutingData: defaultScoutingData,
+      setScoutingData: () => {},
+      updateScoutingData: () => {},
+    };
   }
   return context;
 } 

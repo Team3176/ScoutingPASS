@@ -17,6 +17,7 @@ export const unstable_settings = {
   initialRouteName: '(tabs)',
 };
 
+// Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -25,16 +26,22 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (error) throw error;
+    if (error) {
+      console.error('Error loading fonts:', error);
+      // Hide splash screen even if there's an error
+      SplashScreen.hideAsync().catch(e => console.warn('Error hiding splash screen:', e));
+    }
   }, [error]);
 
   useEffect(() => {
     if (loaded) {
-      SplashScreen.hideAsync();
+      // Hide splash screen when fonts are loaded
+      SplashScreen.hideAsync().catch(e => console.warn('Error hiding splash screen:', e));
     }
   }, [loaded]);
 
-  if (!loaded) {
+  // Return null until fonts are loaded or there's an error
+  if (!loaded && !error) {
     return null;
   }
 

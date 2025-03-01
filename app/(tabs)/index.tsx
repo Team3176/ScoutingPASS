@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { StyleSheet, Image, TouchableOpacity, TouchableWithoutFeedback, Dimensions, View as RNView, Modal, useColorScheme } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Image, TouchableOpacity, TouchableWithoutFeedback, Dimensions, View as RNView, Modal, useColorScheme, Alert } from 'react-native';
 import { Text, View, TextInput } from '../../components/Themed';
 import { ScrollView } from 'react-native-gesture-handler';
 import { useRouter } from 'expo-router';
@@ -50,10 +50,22 @@ const RadioButton: React.FC<RadioButtonProps> = ({ label, selected, onSelect }) 
 export default function PreMatchScreen() {
   const router = useRouter();
   const { scoutingData, updateScoutingData } = useScoutingData();
-  const configJson = JSON.parse(config_data);
+  const [configJson, setConfigJson] = useState<any>(null);
+  const [configError, setConfigError] = useState<string | null>(null);
   const colorScheme = useColorScheme() ?? 'light';
   const [showMatchLevelDropdown, setShowMatchLevelDropdown] = useState(false);
   const [isMapFlipped, setIsMapFlipped] = useState(false);
+
+  // Parse config data safely
+  useEffect(() => {
+    try {
+      const parsedConfig = JSON.parse(config_data);
+      setConfigJson(parsedConfig);
+    } catch (error) {
+      console.error('Error parsing config data:', error);
+      setConfigError('Failed to load configuration data. Please restart the app.');
+    }
+  }, []);
 
   const handleInputChange = (field: string, value: string) => {
     updateScoutingData({ [field]: value });
@@ -84,12 +96,48 @@ export default function PreMatchScreen() {
     }
   };
 
+  // If there's a config error, show an error message
+  if (configError) {
+    return (
+      <View style={[styles.container, { backgroundColor: colorScheme === 'light' ? '#fff' : '#000' }]}>
+        <Text style={[styles.title, { color: colorScheme === 'light' ? '#000' : '#fff' }]}>
+          Configuration Error
+        </Text>
+        <Text style={{ color: 'red', textAlign: 'center', margin: 20 }}>{configError}</Text>
+        <Button 
+          text="Retry" 
+          onPress={() => {
+            try {
+              const parsedConfig = JSON.parse(config_data);
+              setConfigJson(parsedConfig);
+              setConfigError(null);
+            } catch (error) {
+              console.error('Error parsing config data on retry:', error);
+              setConfigError('Failed to load configuration data. Please restart the app.');
+            }
+          }} 
+        />
+      </View>
+    );
+  }
+
+  // If config is still loading, show a loading message
+  if (!configJson) {
+    return (
+      <View style={[styles.container, { backgroundColor: colorScheme === 'light' ? '#fff' : '#000' }]}>
+        <Text style={[styles.title, { color: colorScheme === 'light' ? '#000' : '#fff' }]}>
+          Loading...
+        </Text>
+      </View>
+    );
+  }
+
   // Find the field configs from prematch section
-  const eventConfig = configJson.prematch.find((field: any) => field.code === 'e');
-  const matchConfig = configJson.prematch.find((field: any) => field.code === 'm');
-  const teamConfig = configJson.prematch.find((field: any) => field.code === 't');
-  const scouterConfig = configJson.prematch.find((field: any) => field.code === 's');
-  const robotConfig = configJson.prematch.find((field: any) => field.code === 'r');
+  const eventConfig = configJson.prematch?.find((field: any) => field.code === 'e') || { name: 'Event Code' };
+  const matchConfig = configJson.prematch?.find((field: any) => field.code === 'm') || { name: 'Match Number' };
+  const teamConfig = configJson.prematch?.find((field: any) => field.code === 't') || { name: 'Team Number' };
+  const scouterConfig = configJson.prematch?.find((field: any) => field.code === 's') || { name: 'Scouter Name' };
+  const robotConfig = configJson.prematch?.find((field: any) => field.code === 'r');
 
   // Determine if blue alliance is selected
   const isBlueAlliance = scoutingData.robotPosition?.startsWith('b');
@@ -109,23 +157,23 @@ export default function PreMatchScreen() {
         <View style={styles.content}>
           <View style={styles.formContainer}>
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>{eventConfig?.name || 'Event Code'}</Text>
+              <Text style={styles.label}>{eventConfig.name}</Text>
               <TextInput
                 style={[styles.input, { color: '#000000' }]}
                 value={scoutingData.event}
                 onChangeText={(value) => handleInputChange('event', value)}
-                placeholder={`Enter ${eventConfig?.name.toLowerCase() || 'event code'}`}
+                placeholder={`Enter ${eventConfig.name.toLowerCase()}`}
                 placeholderTextColor="#999"
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>{matchConfig?.name || 'Match Number'}</Text>
+              <Text style={styles.label}>{matchConfig.name}</Text>
               <TextInput
                 style={[styles.input, { color: '#000000' }]}
                 value={scoutingData.matchNumber}
                 onChangeText={(value) => handleInputChange('matchNumber', value)}
-                placeholder={`Enter ${matchConfig?.name.toLowerCase() || 'match number'}`}
+                placeholder={`Enter ${matchConfig.name.toLowerCase()}`}
                 placeholderTextColor="#999"
                 keyboardType="numeric"
               />
@@ -181,24 +229,24 @@ export default function PreMatchScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>{teamConfig?.name || 'Team Number'}</Text>
+              <Text style={styles.label}>{teamConfig.name}</Text>
               <TextInput
                 style={[styles.input, { color: '#000000' }]}
                 value={scoutingData.teamNumber}
                 onChangeText={(value) => handleInputChange('teamNumber', value)}
-                placeholder={`Enter ${teamConfig?.name.toLowerCase() || 'team number'}`}
+                placeholder={`Enter ${teamConfig.name.toLowerCase()}`}
                 placeholderTextColor="#999"
                 keyboardType="numeric"
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>{scouterConfig?.name || 'Scouter Name'}</Text>
+              <Text style={styles.label}>{scouterConfig.name}</Text>
               <TextInput
                 style={[styles.input, { color: '#000000' }]}
                 value={scoutingData.scouterInitials}
                 onChangeText={(value) => handleInputChange('scouterInitials', value)}
-                placeholder={`Enter ${scouterConfig?.name.toLowerCase() || 'your name'}`}
+                placeholder={`Enter ${scouterConfig.name.toLowerCase()}`}
                 placeholderTextColor="#999"
               />
             </View>
