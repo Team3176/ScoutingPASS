@@ -7,7 +7,7 @@
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
@@ -48,14 +48,12 @@
         "origin": false
       },
       "eas": {
-        "projectId": "56c6ab98-fcb8-425b-baed-c2ff4b989ad7"
+        "projectId": "ec0a3af5-f31c-4141-b6ca-25c257760e66"
       }
     },
     "runtimeVersion": {
       "policy": "sdkVersion"
     },
-    "updates": {
-      "url": "https://u.expo.dev/56c6ab98-fcb8-425b-baed-c2ff4b989ad7"
-    }
+    "owner": "peppermiller"
   }
 }

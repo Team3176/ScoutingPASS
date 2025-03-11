@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from "react";
 
 export interface ScoutingData {
   // Pre-match data
@@ -21,7 +21,7 @@ export interface ScoutingData {
   autonNetScore: number[];
   mobility: number[];
   crossedLine: number[];
-  coralScoredLocation: 'barge' | 'processor' | 'both' | null;
+  coralScoredLocation: "barge" | "processor" | "both" | null;
   autonScoringPositions: { x: number; y: number }[];
 
   // Teleop data
@@ -41,16 +41,16 @@ export interface ScoutingData {
   algaeRemoved: boolean;
   robotDied: boolean;
   playedDefense: boolean;
-  cageHang: 'deep' | 'shallow' | 'line' | null;
+  cageHang: "deep" | "shallow" | "line" | null;
 
   // Endgame data
   onStage: boolean;
   spotlit: boolean;
   harmony: boolean;
   trap: boolean;
-  parked: 'not_attempted' | 'failed' | 'successful';
-  driverSkill: 'not_attempted' | 'failed' | 'successful';
-  speedRating: 'not_attempted' | 'failed' | 'successful';
+  parked: "not_attempted" | "failed" | "successful";
+  driverSkill: "not_attempted" | "failed" | "successful";
+  speedRating: "not_attempted" | "failed" | "successful";
   defenseRating: number;
   comments: string;
   redAllianceScore: string;
@@ -65,12 +65,12 @@ export interface ScoutingContextType {
 
 export const defaultScoutingData: ScoutingData = {
   // Pre-match defaults
-  scouterInitials: '',
-  event: '',
-  matchLevel: '',
-  matchNumber: '',
-  teamNumber: '',
-  robotPosition: '',
+  scouterInitials: "",
+  event: "",
+  matchLevel: "",
+  matchNumber: "",
+  teamNumber: "",
+  robotPosition: "",
   redPoint: null,
   bluePoint: null,
   clickedPoints: [],
@@ -111,13 +111,13 @@ export const defaultScoutingData: ScoutingData = {
   spotlit: false,
   harmony: false,
   trap: false,
-  parked: 'not_attempted',
-  driverSkill: 'not_attempted',
-  speedRating: 'not_attempted',
+  parked: "not_attempted",
+  driverSkill: "not_attempted",
+  speedRating: "not_attempted",
   defenseRating: 0,
-  comments: '',
-  redAllianceScore: '',
-  blueAllianceScore: '',
+  comments: "",
+  redAllianceScore: "",
+  blueAllianceScore: "",
 };
 
 export const ScoutingContext = createContext<ScoutingContextType>({
@@ -127,28 +127,31 @@ export const ScoutingContext = createContext<ScoutingContextType>({
 });
 
 export function ScoutingProvider({ children }: { children: React.ReactNode }) {
-  const [scoutingData, setScoutingData] = useState<ScoutingData>(defaultScoutingData);
+  const [scoutingData, setScoutingData] =
+    useState<ScoutingData>(defaultScoutingData);
   const [error, setError] = useState<Error | null>(null);
 
   const updateScoutingData = (updates: Partial<ScoutingData>) => {
     try {
-      setScoutingData(prev => ({
+      setScoutingData((prev) => ({
         ...prev,
         ...updates,
       }));
     } catch (err) {
-      console.error('Error updating scouting data:', err);
+      console.error("Error updating scouting data:", err);
       setError(err instanceof Error ? err : new Error(String(err)));
     }
   };
 
   // If there was an error, render children anyway but log the error
   if (error) {
-    console.error('ScoutingProvider error:', error);
+    console.error("ScoutingProvider error:", error);
   }
 
   return (
-    <ScoutingContext.Provider value={{ scoutingData, setScoutingData, updateScoutingData }}>
+    <ScoutingContext.Provider
+      value={{ scoutingData, setScoutingData, updateScoutingData }}
+    >
       {children}
     </ScoutingContext.Provider>
   );
@@ -157,7 +160,7 @@ export function ScoutingProvider({ children }: { children: React.ReactNode }) {
 export function useScoutingData() {
   const context = useContext(ScoutingContext);
   if (context === undefined) {
-    console.error('useScoutingData must be used within a ScoutingProvider');
+    console.error("useScoutingData must be used within a ScoutingProvider");
     // Return a default context instead of throwing to prevent crashes
     return {
       scoutingData: defaultScoutingData,
@@ -166,4 +169,4 @@ export function useScoutingData() {
     };
   }
   return context;
-} 
+}
