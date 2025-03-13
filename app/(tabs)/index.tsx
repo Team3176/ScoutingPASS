@@ -183,9 +183,6 @@ export default function PreMatchScreen() {
   }
 
   // Find the field configs from prematch section
-  const eventConfig = configJson.prematch?.find(
-    (field: any) => field.code === "e"
-  ) || { name: "Event Code" };
   const matchConfig = configJson.prematch?.find(
     (field: any) => field.code === "m"
   ) || { name: "Match Number" };
@@ -222,17 +219,6 @@ export default function PreMatchScreen() {
 
         <View style={styles.content}>
           <View style={styles.formContainer}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>{eventConfig.name}</Text>
-              <TextInput
-                style={[styles.input, { color: "#000000" }]}
-                value={scoutingData.event}
-                onChangeText={(value) => handleInputChange("event", value)}
-                placeholder={`Enter ${eventConfig.name.toLowerCase()}`}
-                placeholderTextColor="#999"
-              />
-            </View>
-
             <View style={styles.inputGroup}>
               <Text style={styles.label}>{matchConfig.name}</Text>
               <TextInput
@@ -408,33 +394,21 @@ export default function PreMatchScreen() {
                       ]}
                       resizeMode="contain"
                     />
-                    {/* Show point with color based on alliance */}
-                    {scoutingData.bluePoint && (
+                    {/* Show single dot with color based on alliance only if robot position is selected */}
+                    {scoutingData.robotPosition && (
+                      (isBlueAlliance && scoutingData.bluePoint) || 
+                      (!isBlueAlliance && scoutingData.redPoint)
+                    ) && (
                       <RNView
                         style={[
                           styles.dot,
                           {
                             position: "absolute",
                             left: isMapFlipped
-                              ? imageWidth - scoutingData.bluePoint.x - 5
-                              : scoutingData.bluePoint.x - 5,
-                            top: scoutingData.bluePoint.y - 5,
-                            backgroundColor: "#0000FF",
-                          },
-                        ]}
-                      />
-                    )}
-                    {scoutingData.redPoint && (
-                      <RNView
-                        style={[
-                          styles.dot,
-                          {
-                            position: "absolute",
-                            left: isMapFlipped
-                              ? imageWidth - scoutingData.redPoint.x - 5
-                              : scoutingData.redPoint.x - 5,
-                            top: scoutingData.redPoint.y - 5,
-                            backgroundColor: "#FF0000",
+                              ? imageWidth - (isBlueAlliance ? scoutingData.bluePoint!.x : scoutingData.redPoint!.x) - 5
+                              : (isBlueAlliance ? scoutingData.bluePoint!.x : scoutingData.redPoint!.x) - 5,
+                            top: (isBlueAlliance ? scoutingData.bluePoint!.y : scoutingData.redPoint!.y) - 5,
+                            backgroundColor: isBlueAlliance ? "#0000FF" : "#FF0000",
                           },
                         ]}
                       />

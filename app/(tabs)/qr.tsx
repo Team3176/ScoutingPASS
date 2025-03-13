@@ -21,7 +21,6 @@ export default function QRScreen() {
     // Create a simplified version of the data for the QR code
     const qrData = {
       scouter_name: scoutingData.scouterInitials,
-      event: scoutingData.event,
       level: scoutingData.matchLevel === "Qualifications" ? "quals" : "elims",
       match_num: scoutingData.matchNumber,
       team_num: scoutingData.teamNumber,
@@ -29,61 +28,27 @@ export default function QRScreen() {
       starting_pos: scoutingData.robotPosition?.startsWith("r")
         ? scoutingData.redPoint
         : scoutingData.bluePoint,
-      // Autonomous - Arrays of 1s and 0s for each button press
-      L1_auton: Array.isArray(scoutingData.autonCoralL1)
-        ? scoutingData.autonCoralL1
-        : [],
-      L2_auton: Array.isArray(scoutingData.autonCoralL2)
-        ? scoutingData.autonCoralL2
-        : [],
-      L3_auton: Array.isArray(scoutingData.autonCoralL3)
-        ? scoutingData.autonCoralL3
-        : [],
-      L4_auton: Array.isArray(scoutingData.autonCoralL4)
-        ? scoutingData.autonCoralL4
-        : [],
-      floor: Array.isArray(scoutingData.autonProcessorScore)
-        ? scoutingData.autonProcessorScore
-        : [],
-      human_feed: Array.isArray(scoutingData.autonNetScore)
-        ? scoutingData.autonNetScore
-        : [],
-      processor: Array.isArray(scoutingData.mobility)
-        ? scoutingData.mobility
-        : [],
-      barge: Array.isArray(scoutingData.crossedLine)
-        ? scoutingData.crossedLine
-        : [],
+      // Autonomous - Convert arrays to scored/total format
+      L1_auton: `${scoutingData.autonCoralL1.filter(x => x === 1).length}/${scoutingData.autonCoralL1.length}`,
+      L2_auton: `${scoutingData.autonCoralL2.filter(x => x === 1).length}/${scoutingData.autonCoralL2.length}`,
+      L3_auton: `${scoutingData.autonCoralL3.filter(x => x === 1).length}/${scoutingData.autonCoralL3.length}`,
+      L4_auton: `${scoutingData.autonCoralL4.filter(x => x === 1).length}/${scoutingData.autonCoralL4.length}`,
+      algae_removal: `${scoutingData.autonProcessorScore.filter(x => x === 1).length}/${scoutingData.autonProcessorScore.length}`,
+      processor: `${scoutingData.mobility.filter(x => x === 1).length}/${scoutingData.mobility.length}`,
+      net: `${scoutingData.crossedLine.filter(x => x === 1).length}/${scoutingData.crossedLine.length}`,
       start_line:
         Array.isArray(scoutingData.crossedLine) &&
         scoutingData.crossedLine[0] === 1
           ? 1
           : 0,
-      // Teleop - Arrays of 1s and 0s for each button press
-      L1_teleop: Array.isArray(scoutingData.teleopCoralL1)
-        ? scoutingData.teleopCoralL1
-        : [],
-      L2_teleop: Array.isArray(scoutingData.teleopCoralL2)
-        ? scoutingData.teleopCoralL2
-        : [],
-      L3_teleop: Array.isArray(scoutingData.teleopCoralL3)
-        ? scoutingData.teleopCoralL3
-        : [],
-      L4_teleop: Array.isArray(scoutingData.teleopCoralL4)
-        ? scoutingData.teleopCoralL4
-        : [],
-      floor_teleop: Array.isArray(scoutingData.teleopProcessorScore)
-        ? scoutingData.teleopProcessorScore
-        : [],
-      human_teleop: Array.isArray(scoutingData.teleopNetScore)
-        ? scoutingData.teleopNetScore
-        : [],
-      process_teleop: Array.isArray(scoutingData.teleopAlgaeProcessor)
-        ? scoutingData.teleopAlgaeProcessor
-        : [],
-      barge_teleop: Array.isArray(scoutingData.teleopAlgaeNet)
-        ? scoutingData.teleopAlgaeNet
-        : [],
+      // Teleop - Convert arrays to scored/total format
+      L1_teleop: `${scoutingData.teleopCoralL1.filter(x => x === 1).length}/${scoutingData.teleopCoralL1.length}`,
+      L2_teleop: `${scoutingData.teleopCoralL2.filter(x => x === 1).length}/${scoutingData.teleopCoralL2.length}`,
+      L3_teleop: `${scoutingData.teleopCoralL3.filter(x => x === 1).length}/${scoutingData.teleopCoralL3.length}`,
+      L4_teleop: `${scoutingData.teleopCoralL4.filter(x => x === 1).length}/${scoutingData.teleopCoralL4.length}`,
+      algae_removal_teleop: `${scoutingData.teleopProcessorScore.filter(x => x === 1).length}/${scoutingData.teleopProcessorScore.length}`,
+      processor_teleop: `${scoutingData.teleopAlgaeProcessor.filter(x => x === 1).length}/${scoutingData.teleopAlgaeProcessor.length}`,
+      net_teleop: `${scoutingData.teleopAlgaeNet.filter(x => x === 1).length}/${scoutingData.teleopAlgaeNet.length}`,
       penalties: scoutingData.defenseRating,
       defense: scoutingData.playedDefense ? 1 : 0,
       died: scoutingData.robotDied ? 1 : 0,
