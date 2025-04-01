@@ -26,8 +26,14 @@ export default function QRScreen() {
       team_num: scoutingData.teamNumber,
       robot: scoutingData.robotPosition,
       starting_pos: scoutingData.robotPosition?.startsWith("r")
-        ? scoutingData.redPoint
-        : scoutingData.bluePoint,
+        ? scoutingData.redPoint && {
+            x: Number(scoutingData.redPoint.x.toFixed(3)),
+            y: Number(scoutingData.redPoint.y.toFixed(3))
+          }
+        : scoutingData.bluePoint && {
+            x: Number(scoutingData.bluePoint.x.toFixed(3)),
+            y: Number(scoutingData.bluePoint.y.toFixed(3))
+          },
       // Autonomous - Convert arrays to scored/total format
       L1_auton: `${scoutingData.autonCoralL1.filter(x => x === 1).length}/${scoutingData.autonCoralL1.length}`,
       L2_auton: `${scoutingData.autonCoralL2.filter(x => x === 1).length}/${scoutingData.autonCoralL2.length}`,
@@ -95,7 +101,20 @@ export default function QRScreen() {
   };
 
   const handleClear = () => {
-    setScoutingData(defaultScoutingData);
+    // Preserve these values and increment match number
+    const preservedValues = {
+      scouterInitials: scoutingData.scouterInitials,
+      robotPosition: scoutingData.robotPosition,
+      matchNumber: String(Number(scoutingData.matchNumber) + 1), // Increment match number
+    };
+    
+    // Set scouting data to default values but keep preserved values
+    setScoutingData({
+      ...defaultScoutingData,
+      ...preservedValues,
+      playedDefense: false,
+      robotDied: false
+    });
     router.replace("/");
   };
 

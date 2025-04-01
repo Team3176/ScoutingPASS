@@ -311,6 +311,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  warningContainer: {
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  warningText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
 } as const);
 
 interface LButtonsProps {
@@ -409,6 +420,9 @@ export default function AutonScreen() {
     barge: false,
   });
 
+  const [showWarning, setShowWarning] = useState(false);
+  const [warningMessage, setWarningMessage] = useState("");
+
   const [selectedLabels, setSelectedLabels] = useState<Set<number>>(new Set());
   const [selectedLabelForPrompt, setSelectedLabelForPrompt] = useState<
     number | null
@@ -494,18 +508,37 @@ export default function AutonScreen() {
   };
 
   const handleLabelPress = (labelId: number) => {
+    if (selectedLabelForPrompt === labelId) {
+      setShowPrompt(false);
+      setSelectedLabelForPrompt(null);
+      return;
+    }
     setSelectedLabelForPrompt(labelId);
     setSelectedPickupForPrompt(null);
     setShowPrompt(true);
   };
 
   const handlePickupPress = (pickup: string) => {
+    if (selectedPickupForPrompt === pickup) {
+      setShowPrompt(false);
+      setSelectedPickupForPrompt(null);
+      return;
+    }
     setSelectedPickupForPrompt(pickup);
     setSelectedLabelForPrompt(null);
     setShowPrompt(true);
   };
 
   const handleNext = () => {
+    // Check if robot is selected but no start position is set
+    if (scoutingData.robotPosition && 
+        ((scoutingData.robotPosition.startsWith('r') && !scoutingData.redPoint) || 
+         (scoutingData.robotPosition.startsWith('b') && !scoutingData.bluePoint))) {
+      setWarningMessage("Select a start position");
+      setShowWarning(true);
+      setTimeout(() => setShowWarning(false), 3000);
+      return;
+    }
     router.push("/teleop");
   };
 
@@ -664,6 +697,12 @@ export default function AutonScreen() {
         >
           {configJson.page_title} - Autonomous
         </Text>
+
+        {showWarning && (
+          <View style={[styles.warningContainer, { backgroundColor: Colors[colorScheme].errorBackground }]}>
+            <Text style={styles.warningText}>{warningMessage}</Text>
+          </View>
+        )}
 
         <View style={styles.content}>
           <LButtons

@@ -79,6 +79,8 @@ export default function PreMatchScreen() {
   const colorScheme = useColorScheme() ?? "light";
   const [showMatchLevelDropdown, setShowMatchLevelDropdown] = useState(false);
   const [isMapFlipped, setIsMapFlipped] = useState(false);
+  const [showWarning, setShowWarning] = useState(false);
+  const [warningMessage, setWarningMessage] = useState("");
 
   // Parse config data safely
   useEffect(() => {
@@ -98,6 +100,15 @@ export default function PreMatchScreen() {
   };
 
   const handleNext = () => {
+    // Check if robot is selected but no start position is set
+    if (scoutingData.robotPosition && 
+        ((scoutingData.robotPosition.startsWith('r') && !scoutingData.redPoint) || 
+         (scoutingData.robotPosition.startsWith('b') && !scoutingData.bluePoint))) {
+      setWarningMessage("Select a start position");
+      setShowWarning(true);
+      setTimeout(() => setShowWarning(false), 3000);
+      return;
+    }
     router.push("/auton");
   };
 
@@ -422,6 +433,10 @@ export default function PreMatchScreen() {
               >
                 <Text style={styles.flipButtonText}>Flip Map</Text>
               </TouchableOpacity>
+
+              {showWarning && (
+                <Text style={styles.warningText}>{warningMessage}</Text>
+              )}
             </View>
 
             <Button onPress={handleNext} style={styles.button} text="Next" />
@@ -557,5 +572,13 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  warningText: {
+    color: '#FF0000',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginTop: 10,
+    marginBottom: 10,
   },
 });

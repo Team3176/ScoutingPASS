@@ -67,7 +67,7 @@ export const defaultScoutingData: ScoutingData = {
   // Pre-match defaults
   scouterInitials: "",
   event: "",
-  matchLevel: "",
+  matchLevel: "Qualifications",
   matchNumber: "",
   teamNumber: "",
   robotPosition: "",

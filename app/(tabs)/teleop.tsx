@@ -348,12 +348,32 @@ export default function TeleopScreen() {
     });
   }, [scores.penalties, scores.playedDefense, scores.robotDied]);
 
+  // Add effect to update local scores when scoutingData changes
+  useEffect(() => {
+    setScores(prev => ({
+      ...prev,
+      penalties: scoutingData.defenseRating,
+      playedDefense: scoutingData.playedDefense,
+      robotDied: scoutingData.robotDied
+    }));
+  }, [scoutingData.defenseRating, scoutingData.playedDefense, scoutingData.robotDied]);
+
   const handleLabelPress = (labelIndex: number) => {
+    // If the same label is pressed again, close the prompt
+    if (selectedLabelForPrompt === labelIndex) {
+      setSelectedLabelForPrompt(null);
+      return;
+    }
     setSelectedLabelForPrompt(labelIndex);
     setSelectedPickupForPrompt(null);
   };
 
   const handlePickupPress = (pickupType: string) => {
+    // If the same pickup is pressed again, close the prompt
+    if (selectedPickupForPrompt === pickupType) {
+      setSelectedPickupForPrompt(null);
+      return;
+    }
     setSelectedPickupForPrompt(pickupType);
     setSelectedLabelForPrompt(null);
   };
